@@ -1,0 +1,64 @@
+import pytest
+
+
+@pytest.fixture
+def auth_client(client):
+    """Retorna client + token para un usuario registrado."""
+    client.post("/api/auth/register", json={
+        "email": "a@test.com", "username": "a", "password": "p", "nombre": "A"
+    })
+    res = client.post("/api/auth/login", json={"email": "a@test.com", "password": "p"})
+    token = res.json()["access_token"]
+    return client, {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def auth_client_b(client):
+    client.post("/api/auth/register", json={
+        "email": "b@test.com", "username": "b", "password": "p", "nombre": "B"
+    })
+    res = client.post("/api/auth/login", json={"email": "b@test.com", "password": "p"})
+    token = res.json()["access_token"]
+    return client, {"Authorization": f"Bearer {token}"}
+
+
+def test_create_household(auth_client):
+    client, headers = auth_client
+    res = client.post("/api/households", json={
+        "nombre": "Nuestro Depto",
+        "ratio_a": 0.57,
+        "nombre_display_a": "Tomas",
+        "nombre_display_b": "Cata"
+    }, headers=headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["nombre"] == "Nuestro Depto"
+    assert "id" in data
+
+
+def test_invite_and_join(auth_client, auth_client_b):
+    client, headers_a = auth_client
+    _, headers_b = auth_client_b
+
+    # A crea hogar
+    h = client.post("/api/households", json={
+        "nombre": "Depto", "ratio_a": 0.57,
+        "nombre_display_a": "A", "nombre_display_b": "B"
+    }, headers=headers_a).json()
+
+    # A genera código
+    invite = client.post(f"/api/households/{h['id']}/invite", headers=headers_a)
+    assert invite.status_code == 200
+    code = invite.json()["code"]
+    assert len(code) == 6
+
+    # B usa el código
+    join = client.post("/api/households/join", json={"code": code}, headers=headers_b)
+    assert join.status_code == 200
+    assert join.json()["id"] == h["id"]
+
+
+def test_join_invalid_code(auth_client_b):
+    client, headers = auth_client_b
+    res = client.post("/api/households/join", json={"code": "XXXXXX"}, headers=headers)
+    assert res.status_code == 404
