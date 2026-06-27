@@ -6,6 +6,7 @@ from database import get_db
 from models import User, Household, HouseholdMember
 from schemas.household import HouseholdCreate, HouseholdOut, InviteOut, JoinRequest
 from services.auth import get_current_user
+from services.seed_categories import seed_categories
 
 router = APIRouter(prefix="/api/households", tags=["households"])
 
@@ -33,6 +34,7 @@ def create_household(
     )
     db.add(member)
     db.commit()
+    seed_categories(h.id, db)
     db.refresh(h)
     return h
 
