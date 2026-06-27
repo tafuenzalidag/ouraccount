@@ -13,7 +13,8 @@ interface Props {
 
 export function TransactionForm({ householdId, onCreated }: Props) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOut[]>([]);
-  const [categories, setCategories] = useState<CategoryOut[]>([]);
+  const [parentCategories, setParentCategories] = useState<CategoryOut[]>([]);
+  const [allCategories, setAllCategories] = useState<CategoryOut[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,7 +24,8 @@ export function TransactionForm({ householdId, onCreated }: Props) {
       apiFetch<CategoryOut[]>(`/api/households/${householdId}/categories`),
     ]).then(([pms, cats]) => {
       setPaymentMethods(pms);
-      setCategories(cats.filter((c) => c.parent_id === null));
+      setParentCategories(cats.filter((c) => c.parent_id === null));
+      setAllCategories(cats);
     });
   }, [householdId]);
 
@@ -97,11 +99,22 @@ export function TransactionForm({ householdId, onCreated }: Props) {
           className="w-full border rounded-md px-3 py-2 text-sm"
         >
           <option value="">Sin categoría</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.nombre}
-            </option>
-          ))}
+          {parentCategories.map((parent) => {
+            const children = allCategories.filter((c) => c.parent_id === parent.id);
+            return children.length > 0 ? (
+              <optgroup key={parent.id} label={parent.nombre}>
+                {children.map((child) => (
+                  <option key={child.id} value={child.id}>
+                    {child.nombre}
+                  </option>
+                ))}
+              </optgroup>
+            ) : (
+              <option key={parent.id} value={parent.id}>
+                {parent.nombre}
+              </option>
+            );
+          })}
         </select>
       </div>
       <div className="flex items-center gap-2">

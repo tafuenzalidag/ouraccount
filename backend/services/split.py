@@ -51,8 +51,10 @@ class SettlementResult:
             for uid in self.pagado
         }
 
-    def settlement(self) -> tuple[str, str, int]:
+    def settlement(self) -> tuple[str | None, str | None, int]:
         """Returns (deudor_id, acreedor_id, monto) for the single transfer that settles accounts."""
+        if len(self.balance) < 2:
+            return (None, None, 0)
         deudor = min(self.balance, key=lambda u: self.balance[u])
         acreedor = max(self.balance, key=lambda u: self.balance[u])
         return deudor, acreedor, abs(self.balance[deudor])

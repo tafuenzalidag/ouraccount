@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -12,7 +12,8 @@ router = APIRouter(prefix="/api/households", tags=["households"])
 
 
 def _generate_code(length=6):
-    return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
+    alphabet = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 @router.post("", response_model=HouseholdOut)
@@ -51,6 +52,12 @@ def join(
     ).first()
     if not slot:
         raise HTTPException(status_code=404, detail="Código inválido o expirado")
+    already = db.query(HouseholdMember).filter(
+        HouseholdMember.household_id == slot.household_id,
+        HouseholdMember.user_id == current_user.id,
+    ).first()
+    if already:
+        raise HTTPException(status_code=400, detail="Ya eres miembro de este hogar")
     slot.user_id = current_user.id
     slot.invite_code = None
     db.commit()

@@ -4,7 +4,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, HouseholdMember, Transaction
+from models import User, HouseholdMember, Transaction, PaymentMethod, Category
 from schemas.transaction import TransactionCreate, TransactionOut
 from services.auth import get_current_user
 from services.split import compute_split
@@ -61,6 +61,21 @@ def create_transaction(
     current_user: User = Depends(get_current_user),
 ):
     _assert_member(household_id, current_user, db)
+
+    pm = db.query(PaymentMethod).filter(
+        PaymentMethod.id == req.payment_method_id,
+        PaymentMethod.household_id == household_id,
+    ).first()
+    if not pm:
+        raise HTTPException(status_code=400, detail="Medio de pago inválido")
+
+    if req.category_id:
+        cat = db.query(Category).filter(
+            Category.id == req.category_id,
+            Category.household_id == household_id,
+        ).first()
+        if not cat:
+            raise HTTPException(status_code=400, detail="Categoría inválida")
 
     desc_norm = _normalize(req.descripcion_raw)
     hash_d = _dedupe_hash(req.fecha_operacion, req.monto, desc_norm)

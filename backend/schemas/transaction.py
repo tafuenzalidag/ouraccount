@@ -1,5 +1,5 @@
 from datetime import date as date_type
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TransactionCreate(BaseModel):
@@ -9,7 +9,7 @@ class TransactionCreate(BaseModel):
     payment_method_id: str
     es_hogar: bool = True
     category_id: str | None = None
-    split_override: float | None = None
+    split_override: float | None = Field(None, ge=0.0, le=1.0)
     lugar: str | None = None
 
 

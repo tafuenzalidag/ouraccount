@@ -39,7 +39,18 @@ def get_settlement(
         Settlement.estado == "pendiente",
     ).first()
 
-    if not settlement and monto > 0:
+    if settlement:
+        if monto > 0:
+            settlement.deudor_user_id = deudor_id
+            settlement.acreedor_user_id = acreedor_id
+            settlement.monto = monto
+            db.commit()
+            db.refresh(settlement)
+        else:
+            db.delete(settlement)
+            db.commit()
+            settlement = None
+    elif monto > 0:
         settlement = Settlement(
             household_id=household_id,
             periodo_desde=desde,
