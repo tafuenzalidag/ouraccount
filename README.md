@@ -2,6 +2,14 @@
 
 Shared expense tracker for two-person households. Automatically splits costs 57/43, tracks payment methods, and calculates who owes whom at the end of each period.
 
+## Live URLs
+
+| Service | URL |
+|---|---|
+| Frontend | https://ouraccount.vercel.app |
+| Backend API | https://ouraccount-api.vercel.app |
+| GitHub | https://github.com/tafuenzalidag/ouraccount |
+
 ## What it does
 
 - Register two users and link them to a shared household via invite code
@@ -12,14 +20,29 @@ Shared expense tracker for two-person households. Automatically splits costs 57/
 
 ## Stack
 
-- **Backend:** FastAPI + SQLAlchemy + Alembic, runs as a Vercel Python serverless function
-- **Frontend:** Next.js 16 (App Router) + Tailwind CSS, deployed via Vercel
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16 (App Router) + Tailwind CSS + shadcn/ui v4 |
+| Backend | FastAPI (Python 3.12) + SQLAlchemy 2.x + Alembic |
+| Database | Neon Postgres (via Vercel integration) |
+| Auth | bcrypt + JWT (python-jose, HS256) |
+| Hosting | Vercel — two separate projects (frontend + backend) |
+| CI | GitHub Actions (pytest + next build on every push/PR) |
+
+## Vercel project structure
+
+The frontend and backend are deployed as two separate Vercel projects:
+
+- `ouraccount` — Next.js frontend, linked to this repo
+- `ouraccount-api` — FastAPI backend, linked to `backend/` subdirectory
+
+`NEXT_PUBLIC_API_URL` in the frontend project points to the backend URL.
 
 ## Local development
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - Node.js 20+
 
 ### Backend
@@ -30,9 +53,9 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Copy and fill in env vars
-cp ../.env.example .env
-# Edit .env: set DATABASE_URL to a local SQLite or Postgres URL
+# Set env vars
+export DATABASE_URL="sqlite:///./dev.db"
+export JWT_SECRET="dev-secret-change-me"
 
 # Run migrations
 alembic upgrade head
@@ -47,7 +70,7 @@ uvicorn main:app --reload --port 8000
 cd frontend
 npm install
 
-# Set the API base URL
+# Point at local backend
 echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 
 npm run dev
@@ -57,13 +80,21 @@ The app runs at `http://localhost:3000`.
 
 ## Environment variables
 
-| Variable | Description | Example |
-|---|---|---|
-| `DATABASE_URL` | PostgreSQL (prod) or SQLite (local/test) connection string | `postgresql://user:pass@host/db` |
-| `JWT_SECRET` | Random 32-character string for signing tokens | `changeme-random-32-chars` |
-| `JWT_ALGORITHM` | JWT signing algorithm | `HS256` |
-| `JWT_EXPIRE_MINUTES` | Token lifetime in minutes (7 days = 10080) | `10080` |
-| `NEXT_PUBLIC_API_URL` | Public URL of the backend API | `https://nuestracuenta.vercel.app` |
+### Backend (`ouraccount-api` Vercel project)
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | Neon Postgres connection string (set automatically by Neon integration) |
+| `JWT_SECRET` | Random 32-char secret for signing JWT tokens |
+| `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins (e.g. `https://ouraccount.vercel.app,http://localhost:3000`) |
+| `JWT_ALGORITHM` | JWT signing algorithm — defaults to `HS256` |
+| `JWT_EXPIRE_MINUTES` | Token lifetime in minutes — defaults to `10080` (7 days) |
+
+### Frontend (`ouraccount` Vercel project)
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Public URL of the backend API (e.g. `https://ouraccount-api.vercel.app`) |
 
 ## Running tests
 
@@ -72,21 +103,34 @@ cd backend
 DATABASE_URL=sqlite:///./test.db pytest tests/ -v
 ```
 
-## Deploy to Vercel
+## Deploying a new version
 
-1. Push this repo to GitHub.
-2. Go to [vercel.com](https://vercel.com) → New Project → import the GitHub repo.
-3. Leave Root Directory as `/` (the `vercel.json` at the root handles routing).
-4. Under **Environment Variables**, add all variables from the table above.
-   - Provision a Vercel Postgres database (Storage → Create → Postgres) and copy the `DATABASE_URL`.
-   - Generate a random `JWT_SECRET` (e.g. `openssl rand -hex 32`).
-   - Set `NEXT_PUBLIC_API_URL` to your Vercel deployment URL (e.g. `https://nuestracuenta.vercel.app`).
-5. After the first deploy, run the initial migration once from your local machine:
+Both projects deploy automatically via `vercel --prod` from the CLI (GitHub auto-deploy is not yet connected — the GitHub app needs permission on the repo).
+
+```bash
+# Backend
+cd backend && vercel --prod
+
+# Frontend
+cd .. && vercel --prod
+```
+
+## Running migrations against production
 
 ```bash
 cd backend
-export DATABASE_URL="postgresql://..."   # production DATABASE_URL
+export $(grep -v '^#' ../.env.local | xargs)
 alembic upgrade head
 ```
 
-6. Subsequent pushes to `main` trigger automatic redeploys. Every pull request runs the CI workflow (backend tests + frontend build) before merging.
+The `.env.local` file is populated by `vercel env pull .env.local --yes` from the `ouraccount` project root.
+
+## Roadmap
+
+| Phase | Status | Contents |
+|---|---|---|
+| Fase 0 | ✅ Done | Monorepo setup, FastAPI skeleton, Next.js, SQLAlchemy/Alembic |
+| Fase 1 — MVP | ✅ Done | Auth, Household, Payment methods, Manual transaction entry, Split engine, Settlement, Dashboard |
+| Fase 2 — Ingesta | 🔜 Next | PDF parser (Santander cartola), import preview, auto-categorisation, installment plans |
+| Fase 3 — Análisis | ⏳ Pending | Monthly trends, installment projection, CSV support |
+| Fase 4 — Conveniencia | ⏳ Pending | Bank sync, budgets, recurring expenses, export |
