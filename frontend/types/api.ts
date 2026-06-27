@@ -45,3 +45,20 @@ export interface SettlementPeriodOut {
   debido: Record<string, number>;
   balance: Record<string, number>;
 }
+
+export interface PaymentMethodOut {
+  id: string;
+  tipo: string;
+  alias: string;
+  ultimos_digitos: string | null;
+  es_compartido: boolean;
+  banco: string | null;
+}
+
+export interface CategoryOut {
+  id: string;
+  nombre: string;
+  parent_id: string | null;
+  icono: string | null;
+  color: string | null;
+}
