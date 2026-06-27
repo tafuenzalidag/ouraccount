@@ -19,7 +19,7 @@ class HouseholdMember(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     household_id: Mapped[str] = mapped_column(String, ForeignKey("households.id"), nullable=False)
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[str | None] = mapped_column(String, ForeignKey("users.id"), nullable=True)
     ratio_default: Mapped[float] = mapped_column(Numeric(5, 4), nullable=False)
     nombre_display: Mapped[str | None] = mapped_column(String, nullable=True)
     invite_code: Mapped[str | None] = mapped_column(String, nullable=True)

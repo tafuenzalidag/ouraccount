@@ -62,3 +62,16 @@ def test_join_invalid_code(auth_client_b):
     client, headers = auth_client_b
     res = client.post("/api/households/join", json={"code": "XXXXXX"}, headers=headers)
     assert res.status_code == 404
+
+
+def test_invite_forbidden_for_non_member(auth_client, auth_client_b):
+    client, headers_a = auth_client
+    _, headers_b = auth_client_b
+    # A creates a household
+    h = client.post("/api/households", json={
+        "nombre": "Depto", "ratio_a": 0.57,
+        "nombre_display_a": "A", "nombre_display_b": "B"
+    }, headers=headers_a).json()
+    # B (not a member) tries to generate an invite
+    res = client.post(f"/api/households/{h['id']}/invite", headers=headers_b)
+    assert res.status_code == 403

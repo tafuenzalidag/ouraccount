@@ -45,7 +45,7 @@ def join(
 ):
     slot = db.query(HouseholdMember).filter(
         HouseholdMember.invite_code == req.code,
-        HouseholdMember.user_id == "__pending__",
+        HouseholdMember.user_id == None,
     ).first()
     if not slot:
         raise HTTPException(status_code=404, detail="Código inválido o expirado")
@@ -71,7 +71,7 @@ def invite(
     code = _generate_code()
     slot = HouseholdMember(
         household_id=household_id,
-        user_id="__pending__",
+        user_id=None,
         ratio_default=round(1.0 - float(member.ratio_default), 4),
         invite_code=code,
     )
@@ -110,7 +110,7 @@ def get_members(
         raise HTTPException(status_code=403, detail="No perteneces a este hogar")
     members = db.query(HouseholdMember).filter(
         HouseholdMember.household_id == household_id,
-        HouseholdMember.user_id != "__pending__",
+        HouseholdMember.user_id != None,
     ).all()
     users = {
         u.id: u
