@@ -72,7 +72,8 @@ async def upload_pdf(
 
     preview_items: list[PreviewItemOut] = []
     for item in result.items:
-        cat_id, _ = apply_category(item.descripcion_norm, household_id, db)
+        cat_id, es_hogar_default = apply_category(item.descripcion_norm, household_id, db)
+        es_hogar = item.es_hogar if item.es_interno else es_hogar_default
         installment_out = None
         if item.installment:
             installment_out = InstallmentIn(
@@ -91,7 +92,7 @@ async def upload_pdf(
                 monto=item.monto,
                 tipo_movimiento=item.tipo_movimiento,
                 es_interno=item.es_interno,
-                es_hogar=item.es_hogar,
+                es_hogar=es_hogar,
                 incluido=item.incluido,
                 category_id=cat_id,
                 installment=installment_out,
