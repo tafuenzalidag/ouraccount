@@ -1,6 +1,3 @@
-import hashlib
-import re
-from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
@@ -8,22 +5,9 @@ from models import User, HouseholdMember, Transaction, PaymentMethod, Category
 from schemas.transaction import TransactionCreate, TransactionOut
 from services.auth import get_current_user
 from services.split import compute_split
+from services.text_utils import normalize_desc, dedupe_hash
 
 router = APIRouter(prefix="/api/households", tags=["transactions"])
-
-GATEWAY_PREFIXES = re.compile(
-    r"^(MP\*|MERCADOPAGO\*|MERPAGO\*|DP \*|FLOW \*|PedidosYa\*)",
-    re.IGNORECASE,
-)
-
-
-def _normalize(desc: str) -> str:
-    return GATEWAY_PREFIXES.sub("", desc).strip().upper()
-
-
-def _dedupe_hash(fecha: date, monto: int, desc_norm: str) -> str:
-    raw = f"{fecha}|{monto}|{desc_norm}"
-    return hashlib.sha256(raw.encode()).hexdigest()[:32]
 
 
 def _assert_member(household_id: str, user: User, db: Session):
@@ -77,8 +61,8 @@ def create_transaction(
         if not cat:
             raise HTTPException(status_code=400, detail="Categoría inválida")
 
-    desc_norm = _normalize(req.descripcion_raw)
-    hash_d = _dedupe_hash(req.fecha_operacion, req.monto, desc_norm)
+    desc_norm = normalize_desc(req.descripcion_raw)
+    hash_d = dedupe_hash(req.fecha_operacion, req.monto, desc_norm)
 
     tx = Transaction(
         household_id=household_id,

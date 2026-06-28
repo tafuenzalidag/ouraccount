@@ -7,6 +7,7 @@ import { useEffect } from "react";
 const NAV = [
   { href: "/dashboard", label: "Inicio" },
   { href: "/transactions", label: "Gastos" },
+  { href: "/imports", label: "Importar" },
   { href: "/settlement", label: "Liquidación" },
   { href: "/settings", label: "Ajustes" },
 ];
