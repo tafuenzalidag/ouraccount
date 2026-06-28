@@ -53,6 +53,13 @@ export interface PaymentMethodOut {
   ultimos_digitos: string | null;
   es_compartido: boolean;
   banco: string | null;
+  owner_user_id: string | null;
+}
+
+export interface MemberOut {
+  user_id: string;
+  nombre_display: string;
+  ratio_default: number;
 }
 
 export interface CategoryOut {

@@ -17,5 +17,6 @@ class PaymentMethodOut(BaseModel):
     ultimos_digitos: str | None
     es_compartido: bool
     banco: str | None
+    owner_user_id: str | None
 
     model_config = {"from_attributes": True}

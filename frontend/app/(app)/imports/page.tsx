@@ -41,6 +41,11 @@ type PaymentMethod = {
   tipo: string;
 };
 
+type Member = {
+  user_id: string;
+  nombre_display: string;
+};
+
 function formatCLP(n: number) {
   return `$${Math.abs(n).toLocaleString("es-CL")}${n < 0 ? " (abono)" : ""}`;
 }
@@ -48,6 +53,7 @@ function formatCLP(n: number) {
 export default function ImportsPage() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPm, setSelectedPm] = useState("");
+  const [members, setMembers] = useState<Member[]>([]);
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [items, setItems] = useState<PreviewItem[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -72,6 +78,15 @@ export default function ImportsPage() {
         if (data.length > 0) setSelectedPm(data[0].id);
       })
       .catch(() => setError("Error cargando medios de pago"));
+    fetch(`${API}/api/households/${hid}/members`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data: Member[]) => {
+        setMembers(data);
+        if (data.length > 0) setPayerUserId(data[0].user_id);
+      })
+      .catch(() => {});
   }, []);
 
   async function handleUpload(e: React.FormEvent) {
@@ -118,7 +133,7 @@ export default function ImportsPage() {
 
   async function handleConfirm() {
     if (!preview || !payerUserId) {
-      setError("Debes ingresar el ID del pagador (usuario que pagó la tarjeta)");
+      setError("Debes seleccionar quién pagó la tarjeta");
       return;
     }
     setConfirming(true);
@@ -252,17 +267,31 @@ export default function ImportsPage() {
 
           <div className="space-y-2">
             <label htmlFor="payer-id" className="block text-sm font-medium">
-              ID del usuario que pagó la tarjeta
-              <span className="text-gray-400 font-normal ml-1">(pega el user ID desde la URL o settings)</span>
+              ¿Quién pagó la tarjeta?
             </label>
-            <input
-              id="payer-id"
-              type="text"
-              value={payerUserId}
-              onChange={(e) => setPayerUserId(e.target.value)}
-              placeholder="uuid del pagador"
-              className="border rounded px-3 py-2 w-full font-mono text-sm"
-            />
+            {members.length > 0 ? (
+              <select
+                id="payer-id"
+                value={payerUserId}
+                onChange={(e) => setPayerUserId(e.target.value)}
+                className="border rounded px-3 py-2 w-full text-sm bg-gray-900 border-white/10"
+              >
+                {members.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.nombre_display}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                id="payer-id"
+                type="text"
+                value={payerUserId}
+                onChange={(e) => setPayerUserId(e.target.value)}
+                placeholder="uuid del pagador"
+                className="border rounded px-3 py-2 w-full font-mono text-sm"
+              />
+            )}
           </div>
 
           <div className="flex gap-3">
