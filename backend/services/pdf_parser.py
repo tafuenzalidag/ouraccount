@@ -233,35 +233,6 @@ def _parse_transaction_line(line: str) -> Optional[ParsedItem]:
     )
 
 
-def _parse_section4_plan(line: str) -> Optional[InstallmentData]:
-    """
-    Parse a new installment plan from section 4.
-    These lines describe NEW plans created this period (not monthly charges from section 1).
-    Returns InstallmentData to be used when the matching cuota in section 1 has cuota_actual=1,
-    so we don't double-count — section 4 is informational only.
-    """
-    date_match = _DATE_RE.search(line)
-    if not date_match:
-        return None
-    amounts = [_parse_monto_clp(m) for m in _AMOUNT_IN_LINE_RE.findall(line)]
-    cuota_match = _CUOTA_RATIO_RE.search(line)
-    if not cuota_match or len(amounts) < 2:
-        return None
-
-    after_date = line[date_match.end():]
-    desc_raw = _AMOUNT_IN_LINE_RE.sub("", after_date)
-    desc_raw = _CUOTA_RATIO_RE.sub("", desc_raw).strip()
-    desc_norm = normalize_desc(desc_raw)
-
-    return InstallmentData(
-        descripcion=desc_norm,
-        monto_total=amounts[0],
-        cuota_actual=1,
-        cuotas_totales=int(cuota_match.group(2)),
-        valor_cuota_mensual=amounts[-1],
-    )
-
-
 def parse_pdf_bytes(pdf_bytes: bytes) -> ParseResult:
     lines = _extract_all_lines(pdf_bytes)
     meta = _parse_meta(lines)

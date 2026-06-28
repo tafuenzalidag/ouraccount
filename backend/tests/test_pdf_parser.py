@@ -1,6 +1,6 @@
-import hashlib
 from datetime import date
 from services.text_utils import normalize_desc, dedupe_hash
+from services.pdf_parser import _parse_monto_clp, _parse_fecha
 
 
 def test_normalize_removes_mp_prefix():
@@ -50,9 +50,6 @@ def test_dedupe_hash_differs_by_date():
 def test_dedupe_hash_is_32_chars():
     h = dedupe_hash(date(2026, 5, 15), 45000, "CASAVINTE")
     assert len(h) == 32
-
-
-from services.pdf_parser import _parse_monto_clp, _parse_fecha
 
 
 def test_parse_monto_simple():
