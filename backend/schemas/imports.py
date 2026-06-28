@@ -38,14 +38,14 @@ class ConfirmItemIn(BaseModel):
     fecha_operacion: date_type
     descripcion_raw: str
     descripcion_norm: str
-    lugar: Optional[str]
+    lugar: Optional[str] = None
     monto: int
     tipo_movimiento: str
     es_interno: bool
     es_hogar: bool
     incluido: bool
-    category_id: Optional[str]
-    installment: Optional[InstallmentIn]
+    category_id: Optional[str] = None
+    installment: Optional[InstallmentIn] = None
 
 
 class ImportConfirmIn(BaseModel):

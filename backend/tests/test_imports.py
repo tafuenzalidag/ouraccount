@@ -222,3 +222,44 @@ def test_confirm_skips_duplicates(setup_db, db):
     assert resp.json()["transactions_created"] == 0
 
     app.dependency_overrides.clear()
+
+
+def test_confirm_rejects_non_member_payer(setup_db, db):
+    user = _make_user(db)
+    household, pm = _make_household_with_member(db, user)
+
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    from models import ImportBatch
+    import uuid
+    batch = ImportBatch(
+        id=str(uuid.uuid4()),
+        household_id=household.id,
+        payment_method_id=pm.id,
+        archivo_origen="pdf",
+        estado="preview",
+    )
+    db.add(batch)
+    db.commit()
+
+    payload = {
+        "payer_user_id": str(uuid.uuid4()),  # random non-member ID
+        "items": [
+            {
+                "fecha_operacion": "2026-05-15",
+                "descripcion_raw": "MP*CASAVINTE",
+                "descripcion_norm": "CASAVINTE",
+                "monto": 45000,
+                "tipo_movimiento": "compra",
+                "es_interno": False,
+                "es_hogar": True,
+                "incluido": True,
+            }
+        ],
+    }
+    resp = client.post(f"/api/imports/{batch.id}/confirm", json=payload)
+    assert resp.status_code == 400
+    assert "payer_user_id" in resp.json()["detail"]
+
+    app.dependency_overrides.clear()

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import (
     User, HouseholdMember, PaymentMethod, ImportBatch,
-    Transaction, InstallmentPlan, SplitAllocation,
+    Transaction, InstallmentPlan,
 )
 from schemas.imports import (
     ImportPreviewOut, PreviewItemOut,
@@ -124,17 +124,21 @@ def confirm_import(
     if batch.estado != "preview":
         raise HTTPException(status_code=409, detail="Este batch ya fue confirmado")
 
+    members = db.query(HouseholdMember).filter(
+        HouseholdMember.household_id == batch.household_id,
+        HouseholdMember.user_id.isnot(None),
+    ).all()
+
+    member_ids = {m.user_id for m in members}
+    if req.payer_user_id not in member_ids:
+        raise HTTPException(status_code=400, detail="payer_user_id no es miembro del hogar")
+
     existing_hashes: set[str] = {
         row[0]
         for row in db.query(Transaction.hash_dedupe)
         .filter(Transaction.household_id == batch.household_id)
         .all()
     }
-
-    members = db.query(HouseholdMember).filter(
-        HouseholdMember.household_id == batch.household_id,
-        HouseholdMember.user_id.isnot(None),
-    ).all()
 
     created = 0
     skipped_dup = 0
