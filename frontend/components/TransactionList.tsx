@@ -11,27 +11,113 @@ interface Props {
 
 export function TransactionList({ transactions }: Props) {
   if (transactions.length === 0) {
-    return <p className="text-gray-400 text-sm text-center py-8">Sin gastos registrados.</p>;
+    return (
+      <div
+        style={{
+          background: "var(--surface-card)",
+          borderRadius: "var(--radius-xl)",
+          padding: "var(--space-9)",
+          textAlign: "center",
+          boxShadow: "var(--shadow-1)",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-text)",
+            fontSize: "var(--t-subhead-size)",
+            color: "var(--text-tertiary)",
+            margin: 0,
+          }}
+        >
+          Sin gastos registrados
+        </p>
+      </div>
+    );
   }
+
   return (
-    <ul className="divide-y">
-      {transactions.map((tx) => (
-        <li key={tx.id} className="py-3 flex justify-between items-start">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-800">{tx.descripcion_norm}</p>
-            <div className="flex gap-2 items-center">
-              <span className="text-xs text-gray-400">{tx.fecha_operacion}</span>
-              <CategoryBadge nombre={tx.category_id ? "Categoría" : null} />
-              {tx.es_hogar && (
-                <span className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">Hogar</span>
-              )}
+    <div
+      style={{
+        background: "var(--surface-card)",
+        borderRadius: "var(--radius-xl)",
+        boxShadow: "var(--shadow-2)",
+        overflow: "hidden",
+      }}
+    >
+      {transactions.map((tx, i) => (
+        <div key={tx.id}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              padding: "var(--space-4) var(--card-padding)",
+              gap: "var(--space-3)",
+            }}
+          >
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-text)",
+                  fontSize: "var(--t-subhead-size)",
+                  fontWeight: "var(--w-medium)",
+                  color: "var(--text-primary)",
+                  margin: "0 0 3px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {tx.descripcion_norm}
+              </p>
+              <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "center", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-text)",
+                    fontSize: "var(--t-caption-size)",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  {tx.fecha_operacion}
+                </span>
+                {tx.category_id && <CategoryBadge nombre="Categoría" />}
+                {tx.es_hogar && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "2px 8px",
+                      borderRadius: "var(--radius-pill)",
+                      background: "var(--accent-tint)",
+                      color: "var(--accent)",
+                      fontFamily: "var(--font-text)",
+                      fontSize: 11,
+                      fontWeight: "var(--w-semibold)",
+                    }}
+                  >
+                    Hogar
+                  </span>
+                )}
+              </div>
             </div>
+            <span
+              style={{
+                fontFamily: "var(--font-text)",
+                fontSize: "var(--t-subhead-size)",
+                fontWeight: "var(--w-semibold)",
+                color: tx.monto < 0 ? "var(--state-safe)" : "var(--text-primary)",
+                flexShrink: 0,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {formatCLP(tx.monto)}
+            </span>
           </div>
-          <span className={`text-sm font-semibold ${tx.monto < 0 ? "text-green-600" : "text-gray-900"}`}>
-            {formatCLP(tx.monto)}
-          </span>
-        </li>
+          {i < transactions.length - 1 && (
+            <div style={{ height: "0.5px", background: "var(--separator)", marginLeft: 16 }} />
+          )}
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }

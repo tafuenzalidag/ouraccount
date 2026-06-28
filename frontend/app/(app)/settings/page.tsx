@@ -2,11 +2,65 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus, Trash2, CreditCard, Landmark } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { getHouseholdId, setHouseholdId } from "@/lib/auth";
 import type { HouseholdOut, PaymentMethodOut, MemberOut } from "@/types/api";
 
 type Tab = "crear" | "unirse";
+
+const sectionLabel: React.CSSProperties = {
+  fontFamily: "var(--font-text)",
+  fontSize: "var(--t-footnote-size)",
+  fontWeight: "var(--w-semibold)",
+  color: "var(--text-tertiary)",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  marginBottom: "var(--space-2)",
+  marginTop: "var(--space-6)",
+  paddingLeft: 4,
+};
+
+const cardStyle: React.CSSProperties = {
+  background: "var(--surface-card)",
+  borderRadius: "var(--radius-xl)",
+  boxShadow: "var(--shadow-2)",
+  overflow: "hidden",
+};
+
+const baseInput: React.CSSProperties = {
+  display: "block",
+  width: "100%",
+  padding: "11px 14px",
+  background: "var(--bg-grouped)",
+  borderRadius: "var(--radius-sm)",
+  boxShadow: "inset 0 0 0 1px var(--separator)",
+  border: "none",
+  fontFamily: "var(--font-text)",
+  fontSize: 17,
+  color: "var(--text-primary)",
+  transition: "box-shadow var(--dur-base) var(--ease-standard)",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "var(--font-text)",
+  fontSize: 13,
+  fontWeight: "var(--w-semibold)",
+  color: "var(--text-secondary)",
+  letterSpacing: "-0.005em",
+  display: "block",
+  marginBottom: 6,
+};
+
+const selectStyle: React.CSSProperties = {
+  ...baseInput,
+  appearance: "none",
+  WebkitAppearance: "none",
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 14px center",
+  paddingRight: 40,
+};
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -15,24 +69,18 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Create household form
   const [nombre, setNombre] = useState("");
   const [ratioA, setRatioA] = useState("0.57");
   const [nombreA, setNombreA] = useState("");
-
-  // Join form
   const [code, setCode] = useState("");
 
-  // Invite code display
   const [inviteCode, setInviteCode] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  // Payment methods
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOut[]>([]);
   const [pmLoading, setPmLoading] = useState(false);
   const [members, setMembers] = useState<MemberOut[]>([]);
 
-  // PM add form
   const [showForm, setShowForm] = useState(false);
   const [formAlias, setFormAlias] = useState("");
   const [formTipo, setFormTipo] = useState("tarjeta_credito");
@@ -43,26 +91,22 @@ export default function SettingsPage() {
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  // PM delete confirmation
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [focused, setFocused] = useState<string | null>(null);
 
   useEffect(() => {
     const hid = getHouseholdId();
     if (!hid) return;
-    apiFetch<HouseholdOut>(`/api/households/${hid}`)
-      .then(setHousehold)
-      .catch(() => setHousehold(null));
+    apiFetch<HouseholdOut>(`/api/households/${hid}`).then(setHousehold).catch(() => setHousehold(null));
     setPmLoading(true);
     apiFetch<PaymentMethodOut[]>(`/api/households/${hid}/payment-methods`)
       .then(setPaymentMethods)
       .catch(() => setPaymentMethods([]))
       .finally(() => setPmLoading(false));
     apiFetch<MemberOut[]>(`/api/households/${hid}/members`)
-      .then((ms) => {
-        setMembers(ms);
-        if (ms.length > 0) setFormOwner(ms[0].user_id);
-      })
+      .then((ms) => { setMembers(ms); if (ms.length > 0) setFormOwner(ms[0].user_id); })
       .catch(() => setMembers([]));
   }, []);
 
@@ -70,19 +114,12 @@ export default function SettingsPage() {
     e.preventDefault();
     setError("");
     const ratio = parseFloat(ratioA);
-    if (isNaN(ratio) || ratio <= 0 || ratio >= 1) {
-      setError("El ratio debe estar entre 0 y 1 (ej. 0.57)");
-      return;
-    }
+    if (isNaN(ratio) || ratio <= 0 || ratio >= 1) { setError("El ratio debe estar entre 0 y 1 (ej. 0.57)"); return; }
     setLoading(true);
     try {
       const h = await apiFetch<HouseholdOut>("/api/households", {
         method: "POST",
-        body: JSON.stringify({
-          nombre,
-          ratio_a: ratio,
-          nombre_display_a: nombreA || null,
-        }),
+        body: JSON.stringify({ nombre, ratio_a: ratio, nombre_display_a: nombreA || null }),
       });
       setHouseholdId(h.id);
       router.push("/dashboard");
@@ -116,10 +153,7 @@ export default function SettingsPage() {
     setInviteLoading(true);
     setInviteCode("");
     try {
-      const res = await apiFetch<{ code: string }>(
-        `/api/households/${household.id}/invite`,
-        { method: "POST" }
-      );
+      const res = await apiFetch<{ code: string }>(`/api/households/${household.id}/invite`, { method: "POST" });
       setInviteCode(res.code);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al generar código");
@@ -135,26 +169,20 @@ export default function SettingsPage() {
     if (!hid) return;
     setFormLoading(true);
     try {
-      const pm = await apiFetch<PaymentMethodOut>(
-        `/api/households/${hid}/payment-methods`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            alias: formAlias.trim(),
-            tipo: formTipo,
-            banco: formBanco.trim() || null,
-            ultimos_digitos: formDigitos.trim() || null,
-            es_compartido: formEsCompartido,
-            owner_user_id: formEsCompartido ? null : formOwner || null,
-          }),
-        }
-      );
+      const pm = await apiFetch<PaymentMethodOut>(`/api/households/${hid}/payment-methods`, {
+        method: "POST",
+        body: JSON.stringify({
+          alias: formAlias.trim(),
+          tipo: formTipo,
+          banco: formBanco.trim() || null,
+          ultimos_digitos: formDigitos.trim() || null,
+          es_compartido: formEsCompartido,
+          owner_user_id: formEsCompartido ? null : formOwner || null,
+        }),
+      });
       setPaymentMethods((prev) => [...prev, pm]);
       setShowForm(false);
-      setFormAlias("");
-      setFormBanco("");
-      setFormDigitos("");
-      setFormEsCompartido(true);
+      setFormAlias(""); setFormBanco(""); setFormDigitos(""); setFormEsCompartido(true);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Error al agregar");
     } finally {
@@ -167,9 +195,7 @@ export default function SettingsPage() {
     if (!hid) return;
     setDeleteLoading(true);
     try {
-      await apiFetch(`/api/households/${hid}/payment-methods/${pmId}`, {
-        method: "DELETE",
-      });
+      await apiFetch(`/api/households/${hid}/payment-methods/${pmId}`, { method: "DELETE" });
       setPaymentMethods((prev) => prev.filter((pm) => pm.id !== pmId));
       setConfirmDeleteId(null);
     } catch (err) {
@@ -180,316 +206,369 @@ export default function SettingsPage() {
     }
   }
 
-  function ownerName(ownerId: string | null): string | null {
+  function ownerName(ownerId: string | null) {
     if (!ownerId) return null;
     return members.find((m) => m.user_id === ownerId)?.nombre_display ?? null;
   }
 
+  function s(name: string): React.CSSProperties {
+    return focused === name ? { ...baseInput, boxShadow: "inset 0 0 0 1.5px var(--accent)" } : baseInput;
+  }
+
+  /* ---- HOUSEHOLD EXISTS ---- */
   if (household) {
     return (
-      <div className="max-w-md mx-auto space-y-6">
-        <h2 className="text-xl font-semibold">Ajustes</h2>
-
-        <div className="rounded-lg border border-white/10 p-4 space-y-1">
-          <p className="text-sm text-gray-400">Hogar actual</p>
-          <p className="font-medium">{household.nombre}</p>
-          <p className="text-xs text-gray-500">{household.moneda}</p>
+      <div>
+        {/* Household info */}
+        <p style={sectionLabel as React.CSSProperties}>Hogar</p>
+        <div style={cardStyle}>
+          <div style={{ padding: "var(--space-4) var(--card-padding)" }}>
+            <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-headline-size)", fontWeight: "var(--w-semibold)", color: "var(--text-primary)", margin: "0 0 2px", letterSpacing: "var(--t-headline-track)" }}>
+              {household.nombre}
+            </p>
+            <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-tertiary)", margin: 0 }}>
+              {household.moneda}
+            </p>
+          </div>
         </div>
 
-        <div className="rounded-lg border border-white/10 p-4 space-y-3">
-          <p className="font-medium">Invitar a otra persona</p>
-          <p className="text-sm text-gray-400">
+        {/* Invite section */}
+        <p style={sectionLabel as React.CSSProperties}>Invitación</p>
+        <div style={{ ...cardStyle, padding: "var(--card-padding)" }}>
+          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--text-secondary)", margin: "0 0 var(--space-4)", lineHeight: "var(--t-subhead-lh)" }}>
             Genera un código de 6 caracteres para que la otra persona se una al hogar.
           </p>
           <button
             onClick={handleGenerateInvite}
             disabled={inviteLoading}
-            className="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm disabled:opacity-50"
+            style={{
+              width: "100%",
+              padding: "11px 20px",
+              background: "var(--accent)",
+              color: "var(--text-on-accent)",
+              border: "none",
+              borderRadius: "var(--radius-md)",
+              fontFamily: "var(--font-text)",
+              fontSize: 17,
+              fontWeight: "var(--w-semibold)",
+              cursor: inviteLoading ? "not-allowed" : "pointer",
+              opacity: inviteLoading ? 0.5 : 1,
+              letterSpacing: "-0.01em",
+            }}
           >
             {inviteLoading ? "Generando…" : "Generar código de invitación"}
           </button>
           {inviteCode && (
-            <div className="text-center py-3 bg-white/5 rounded-md">
-              <p className="text-xs text-gray-400 mb-1">Código de invitación</p>
-              <p className="text-3xl font-mono font-bold tracking-widest">{inviteCode}</p>
+            <div
+              style={{
+                marginTop: "var(--space-4)",
+                background: "var(--fill-4)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-5)",
+                textAlign: "center",
+              }}
+            >
+              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-caption-size)", color: "var(--text-tertiary)", margin: "0 0 6px", letterSpacing: "0.04em", textTransform: "uppercase" as const }}>
+                Código de invitación
+              </p>
+              <p style={{ fontFamily: "var(--font-mono)", fontSize: 34, fontWeight: "var(--w-bold)", letterSpacing: "0.2em", color: "var(--text-primary)", margin: 0 }}>
+                {inviteCode}
+              </p>
             </div>
           )}
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && (
+            <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)", margin: "var(--space-3) 0 0" }}>
+              {error}
+            </p>
+          )}
         </div>
 
-        <div className="rounded-lg border border-white/10 p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="font-medium">Medios de pago</p>
-            {!showForm && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                + Agregar
-              </button>
-            )}
-          </div>
+        {/* Payment methods */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "var(--space-6)", marginBottom: "var(--space-2)", paddingLeft: 4 }}>
+          <p style={{ ...sectionLabel as React.CSSProperties, margin: 0 }}>Medios de pago</p>
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontFamily: "var(--font-text)",
+                fontSize: 14,
+                fontWeight: "var(--w-medium)",
+                color: "var(--accent)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              <Plus size={14} strokeWidth={2.5} />
+              Agregar
+            </button>
+          )}
+        </div>
 
+        <div style={cardStyle}>
           {pmLoading ? (
-            <p className="text-sm text-gray-400">Cargando…</p>
+            <div style={{ padding: "var(--space-7)", textAlign: "center" }}>
+              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-tertiary)", margin: 0 }}>Cargando…</p>
+            </div>
           ) : paymentMethods.length === 0 && !showForm ? (
-            <p className="text-sm text-gray-500">No hay medios de pago registrados.</p>
+            <div style={{ padding: "var(--space-7)", textAlign: "center" }}>
+              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--text-tertiary)", margin: 0 }}>
+                Sin medios de pago registrados
+              </p>
+            </div>
           ) : (
-            <ul className="space-y-0 divide-y divide-white/5">
-              {paymentMethods.map((pm) => (
-                <li key={pm.id} className="flex items-start justify-between gap-3 py-3 first:pt-0">
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-medium text-sm">{pm.alias}</span>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-gray-300 font-mono">
-                        {pm.tipo === "tarjeta_credito" ? "TC" : "CC"}
-                      </span>
-                      {pm.es_compartido ? (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-300">
-                          compartido
+            <>
+              {paymentMethods.map((pm, i) => (
+                <div key={pm.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", padding: "var(--space-4) var(--card-padding)" }}>
+                    {/* Icon */}
+                    <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: "var(--fill-3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {pm.tipo === "tarjeta_credito"
+                        ? <CreditCard size={18} color="var(--accent)" strokeWidth={1.8} />
+                        : <Landmark size={18} color="var(--text-secondary)" strokeWidth={1.8} />
+                      }
+                    </div>
+
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                        <span style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", fontWeight: "var(--w-medium)", color: "var(--text-primary)" }}>
+                          {pm.alias}
                         </span>
-                      ) : (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-900/50 text-purple-300">
-                          {ownerName(pm.owner_user_id) ?? "personal"}
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: "var(--w-semibold)", padding: "1px 6px", background: "var(--fill-3)", borderRadius: "var(--radius-xs)", color: "var(--text-secondary)" }}>
+                          {pm.tipo === "tarjeta_credito" ? "TC" : "CC"}
                         </span>
+                        {pm.es_compartido ? (
+                          <span style={{ fontFamily: "var(--font-text)", fontSize: 11, fontWeight: "var(--w-semibold)", padding: "1px 8px", background: "var(--accent-tint)", borderRadius: "var(--radius-pill)", color: "var(--accent)" }}>
+                            compartido
+                          </span>
+                        ) : (
+                          <span style={{ fontFamily: "var(--font-text)", fontSize: 11, fontWeight: "var(--w-semibold)", padding: "1px 8px", background: "var(--fill-3)", borderRadius: "var(--radius-pill)", color: "var(--text-secondary)" }}>
+                            {ownerName(pm.owner_user_id) ?? "personal"}
+                          </span>
+                        )}
+                      </div>
+                      {(pm.banco || pm.ultimos_digitos) && (
+                        <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-caption-size)", color: "var(--text-tertiary)", margin: "2px 0 0" }}>
+                          {pm.banco ?? ""}{pm.banco && pm.ultimos_digitos ? " · " : ""}{pm.ultimos_digitos ? `••••${pm.ultimos_digitos}` : ""}
+                        </p>
                       )}
                     </div>
-                    {(pm.banco || pm.ultimos_digitos) && (
-                      <p className="text-xs text-gray-500">
-                        {pm.banco ?? ""}
-                        {pm.banco && pm.ultimos_digitos ? " · " : ""}
-                        {pm.ultimos_digitos ? `••••${pm.ultimos_digitos}` : ""}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex-shrink-0 pt-0.5">
+
+                    {/* Delete */}
                     {confirmDeleteId === pm.id ? (
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-gray-400">¿Eliminar?</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexShrink: 0 }}>
                         <button
                           onClick={() => handleDeletePm(pm.id)}
                           disabled={deleteLoading}
-                          className="text-red-400 hover:text-red-300 font-medium disabled:opacity-50"
+                          style={{ fontFamily: "var(--font-text)", fontSize: 14, fontWeight: "var(--w-semibold)", color: "var(--state-alert)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                         >
-                          Sí
+                          Eliminar
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="text-gray-400 hover:text-gray-300"
+                          style={{ fontFamily: "var(--font-text)", fontSize: 14, color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                         >
-                          No
+                          Cancelar
                         </button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(pm.id)}
-                        className="text-xs text-gray-600 hover:text-red-400 transition-colors"
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--text-quaternary)", flexShrink: 0 }}
                       >
-                        Eliminar
+                        <Trash2 size={16} strokeWidth={1.8} />
                       </button>
                     )}
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {showForm && (
-            <form
-              onSubmit={handleAddPm}
-              className="border-t border-white/10 pt-4 space-y-3"
-            >
-              <p className="text-sm font-medium text-gray-300">Nuevo medio de pago</p>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Alias *</label>
-                <input
-                  required
-                  value={formAlias}
-                  onChange={(e) => setFormAlias(e.target.value)}
-                  placeholder="Ej: Tarjeta Tomás"
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Tipo *</label>
-                <select
-                  value={formTipo}
-                  onChange={(e) => setFormTipo(e.target.value)}
-                  className="w-full rounded-md border border-white/10 bg-gray-900 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="tarjeta_credito">Tarjeta de crédito</option>
-                  <option value="cuenta_corriente">Cuenta corriente</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Banco</label>
-                <input
-                  value={formBanco}
-                  onChange={(e) => setFormBanco(e.target.value)}
-                  placeholder="Ej: Santander"
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Últimos 4 dígitos</label>
-                <input
-                  value={formDigitos}
-                  onChange={(e) =>
-                    setFormDigitos(e.target.value.replace(/\D/g, "").slice(0, 4))
-                  }
-                  placeholder="1234"
-                  maxLength={4}
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="es-compartido"
-                  type="checkbox"
-                  checked={formEsCompartido}
-                  onChange={(e) => setFormEsCompartido(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="es-compartido" className="text-sm text-gray-300 cursor-pointer">
-                  ¿Es compartido?
-                </label>
-              </div>
-              {!formEsCompartido && members.length > 0 && (
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Dueño</label>
-                  <select
-                    value={formOwner}
-                    onChange={(e) => setFormOwner(e.target.value)}
-                    className="w-full rounded-md border border-white/10 bg-gray-900 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    {members.map((m) => (
-                      <option key={m.user_id} value={m.user_id}>
-                        {m.nombre_display}
-                      </option>
-                    ))}
-                  </select>
+                  {(i < paymentMethods.length - 1 || showForm) && (
+                    <div style={{ height: "0.5px", background: "var(--separator)", marginLeft: 16 }} />
+                  )}
                 </div>
+              ))}
+
+              {/* Add PM form */}
+              {showForm && (
+                <form onSubmit={handleAddPm} style={{ padding: "var(--card-padding)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+                  <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", fontWeight: "var(--w-semibold)", color: "var(--text-primary)", margin: 0 }}>
+                    Nuevo medio de pago
+                  </p>
+
+                  <div>
+                    <label style={labelStyle}>Alias *</label>
+                    <input required value={formAlias} onChange={(e) => setFormAlias(e.target.value)} placeholder="Ej: Tarjeta Tomás" style={s("alias")} onFocus={() => setFocused("alias")} onBlur={() => setFocused(null)} />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Tipo *</label>
+                    <select value={formTipo} onChange={(e) => setFormTipo(e.target.value)} style={selectStyle}>
+                      <option value="tarjeta_credito">Tarjeta de crédito</option>
+                      <option value="cuenta_corriente">Cuenta corriente</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Banco</label>
+                    <input value={formBanco} onChange={(e) => setFormBanco(e.target.value)} placeholder="Ej: Santander" style={s("banco")} onFocus={() => setFocused("banco")} onBlur={() => setFocused(null)} />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Últimos 4 dígitos</label>
+                    <input
+                      value={formDigitos}
+                      onChange={(e) => setFormDigitos(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="1234"
+                      maxLength={4}
+                      style={{ ...s("digitos"), fontFamily: "var(--font-mono)" }}
+                      onFocus={() => setFocused("digitos")}
+                      onBlur={() => setFocused(null)}
+                    />
+                  </div>
+
+                  <label style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={formEsCompartido}
+                      onChange={(e) => setFormEsCompartido(e.target.checked)}
+                      style={{ width: 18, height: 18, accentColor: "var(--accent)" }}
+                    />
+                    <span style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--text-primary)" }}>
+                      Es compartido
+                    </span>
+                  </label>
+
+                  {!formEsCompartido && members.length > 0 && (
+                    <div>
+                      <label style={labelStyle}>Dueño</label>
+                      <select value={formOwner} onChange={(e) => setFormOwner(e.target.value)} style={selectStyle}>
+                        {members.map((m) => (
+                          <option key={m.user_id} value={m.user_id}>{m.nombre_display}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {formError && (
+                    <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)", margin: 0 }}>
+                      {formError}
+                    </p>
+                  )}
+
+                  <div style={{ display: "flex", gap: "var(--space-3)" }}>
+                    <button
+                      type="submit"
+                      disabled={formLoading}
+                      style={{ flex: 1, padding: "11px 20px", background: "var(--accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: 17, fontWeight: "var(--w-semibold)", cursor: formLoading ? "not-allowed" : "pointer", opacity: formLoading ? 0.5 : 1 }}
+                    >
+                      {formLoading ? "Agregando…" : "Agregar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowForm(false); setFormError(""); setFormAlias(""); setFormBanco(""); setFormDigitos(""); setFormEsCompartido(true); }}
+                      style={{ padding: "11px 20px", background: "var(--fill-3)", color: "var(--text-primary)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: 17, fontWeight: "var(--w-medium)", cursor: "pointer" }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
               )}
-              {formError && <p className="text-red-400 text-xs">{formError}</p>}
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="submit"
-                  disabled={formLoading}
-                  className="flex-1 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50"
-                >
-                  {formLoading ? "Agregando…" : "Agregar"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setFormError("");
-                    setFormAlias("");
-                    setFormBanco("");
-                    setFormDigitos("");
-                    setFormEsCompartido(true);
-                  }}
-                  className="px-4 py-1.5 rounded-md border border-white/10 text-sm text-gray-400 hover:text-white"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+            </>
           )}
         </div>
       </div>
     );
   }
 
+  /* ---- NO HOUSEHOLD: create or join ---- */
   return (
-    <div className="max-w-md mx-auto space-y-6">
-      <h2 className="text-xl font-semibold">Configurar hogar</h2>
-      <div className="flex border-b border-white/10">
+    <div>
+      <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--text-tertiary)", marginBottom: "var(--space-5)" }}>
+        Configura tu hogar para comenzar a registrar gastos compartidos.
+      </p>
+
+      {/* Tab switcher */}
+      <div
+        style={{
+          display: "flex",
+          background: "var(--fill-3)",
+          borderRadius: "var(--radius-md)",
+          padding: 3,
+          marginBottom: "var(--space-5)",
+        }}
+      >
         {(["crear", "unirse"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setError(""); }}
-            className={`flex-1 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${
-              tab === t
-                ? "border-blue-500 text-blue-400"
-                : "border-transparent text-gray-400 hover:text-white"
-            }`}
+            style={{
+              flex: 1,
+              padding: "7px 0",
+              background: tab === t ? "var(--surface-card)" : "transparent",
+              color: tab === t ? "var(--text-primary)" : "var(--text-tertiary)",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              fontFamily: "var(--font-text)",
+              fontSize: 15,
+              fontWeight: tab === t ? "var(--w-semibold)" : "var(--w-medium)",
+              cursor: "pointer",
+              boxShadow: tab === t ? "var(--shadow-1)" : "none",
+              transition: "all var(--dur-fast) var(--ease-standard)",
+            }}
           >
             {t === "crear" ? "Crear hogar" : "Unirse con código"}
           </button>
         ))}
       </div>
 
-      {tab === "crear" ? (
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Nombre del hogar</label>
-            <input
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Nuestro Depto"
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Tu nombre (opcional)</label>
-            <input
-              value={nombreA}
-              onChange={(e) => setNombreA(e.target.value)}
-              placeholder="Tomas"
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Tu porcentaje de gastos</label>
-            <input
-              required
-              type="number"
-              step="0.01"
-              min="0.01"
-              max="0.99"
-              value={ratioA}
-              onChange={(e) => setRatioA(e.target.value)}
-              placeholder="0.57"
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Ej: 0.57 significa que pagas el 57% de los gastos del hogar
-            </p>
-          </div>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50"
-          >
-            {loading ? "Creando…" : "Crear hogar"}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={handleJoin} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Código de invitación</label>
-            <input
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="X7K2QP"
-              maxLength={6}
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-mono tracking-widest uppercase focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50"
-          >
-            {loading ? "Uniéndose…" : "Unirse al hogar"}
-          </button>
-        </form>
-      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+        {tab === "crear" ? (
+          <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+            <div>
+              <label style={labelStyle}>Nombre del hogar</label>
+              <input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nuestro Depto" style={s("nombre")} onFocus={() => setFocused("nombre")} onBlur={() => setFocused(null)} />
+            </div>
+            <div>
+              <label style={labelStyle}>Tu nombre (opcional)</label>
+              <input value={nombreA} onChange={(e) => setNombreA(e.target.value)} placeholder="Tomás" style={s("nombreA")} onFocus={() => setFocused("nombreA")} onBlur={() => setFocused(null)} />
+            </div>
+            <div>
+              <label style={labelStyle}>Tu porcentaje de gastos</label>
+              <input required type="number" step="0.01" min="0.01" max="0.99" value={ratioA} onChange={(e) => setRatioA(e.target.value)} style={s("ratio")} onFocus={() => setFocused("ratio")} onBlur={() => setFocused(null)} />
+              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-caption-size)", color: "var(--text-tertiary)", margin: "6px 0 0", paddingLeft: 4 }}>
+                Ej: 0.57 = pagas el 57% de los gastos del hogar
+              </p>
+            </div>
+            {error && <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)", margin: 0 }}>{error}</p>}
+            <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px 20px", background: "var(--accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: 17, fontWeight: "var(--w-semibold)", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.5 : 1, letterSpacing: "-0.01em", marginTop: "var(--space-2)" }}>
+              {loading ? "Creando…" : "Crear hogar"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleJoin} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+            <div>
+              <label style={labelStyle}>Código de invitación</label>
+              <input
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="X7K2QP"
+                maxLength={6}
+                style={{ ...s("code"), fontFamily: "var(--font-mono)", letterSpacing: "0.2em", textTransform: "uppercase" as const, fontSize: 24, textAlign: "center" as const }}
+                onFocus={() => setFocused("code")}
+                onBlur={() => setFocused(null)}
+              />
+            </div>
+            {error && <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)", margin: 0 }}>{error}</p>}
+            <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px 20px", background: "var(--accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: 17, fontWeight: "var(--w-semibold)", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.5 : 1, letterSpacing: "-0.01em", marginTop: "var(--space-2)" }}>
+              {loading ? "Uniéndose…" : "Unirse al hogar"}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ChevronLeft } from "lucide-react";
 import { getHouseholdId } from "@/lib/auth";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionOut } from "@/types/api";
@@ -19,11 +20,34 @@ export default function NewTransactionPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Nuevo gasto</h2>
+      {/* Back link */}
+      <button
+        onClick={() => router.back()}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          marginBottom: "var(--space-5)",
+          fontFamily: "var(--font-text)",
+          fontSize: 15,
+          color: "var(--accent)",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          fontWeight: "var(--w-medium)",
+        }}
+      >
+        <ChevronLeft size={18} strokeWidth={2} />
+        Gastos
+      </button>
+
       {householdId ? (
         <TransactionForm householdId={householdId} onCreated={handleCreated} />
       ) : (
-        <p className="text-gray-400 text-sm">No hay hogar configurado.</p>
+        <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-tertiary)" }}>
+          No hay hogar configurado
+        </p>
       )}
     </div>
   );

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { getHouseholdId } from "@/lib/auth";
 import { SettlementCard } from "@/components/SettlementCard";
@@ -18,10 +19,23 @@ function currentMonthRange() {
   return { desde, hasta };
 }
 
+const sectionLabel: React.CSSProperties = {
+  fontFamily: "var(--font-text)",
+  fontSize: "var(--t-footnote-size)",
+  fontWeight: "var(--w-semibold)",
+  color: "var(--text-tertiary)",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  marginBottom: "var(--space-3)",
+  marginTop: "var(--space-6)",
+  paddingLeft: 4,
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [settlement, setSettlement] = useState<SettlementPeriodOut | null>(null);
   const [txs, setTxs] = useState<TransactionOut[]>([]);
+  const [totalMes, setTotalMes] = useState(0);
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
@@ -38,58 +52,203 @@ export default function DashboardPage() {
     ])
       .then(([s, t, members]) => {
         setSettlement(s);
-        setTxs(t.slice(0, 5));
+        const recent = t.slice(0, 5);
+        setTxs(recent);
+        const total = t.reduce((acc, tx) => acc + tx.monto, 0);
+        setTotalMes(total);
         setMemberNames(Object.fromEntries(members.map((m) => [m.user_id, m.nombre_display])));
       })
       .catch(() => setError("Error cargando datos"));
   }, [router]);
 
   async function handlePay(id: string) {
-    await apiFetch(`/api/settlements/${id}/pay`, { method: "POST" });
     const hid = householdId!;
+    await apiFetch(`/api/settlements/${id}/pay`, { method: "POST" });
     const { desde, hasta } = currentMonthRange();
     const s = await apiFetch<SettlementPeriodOut>(`/api/households/${hid}/settlement?desde=${desde}&hasta=${hasta}`);
     setSettlement(s);
   }
 
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (error) {
+    return (
+      <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)" }}>
+        {error}
+      </p>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Este mes</h2>
-
-      {settlement && (
-        <SettlementCard
-          data={settlement}
-          memberNames={memberNames}
-          onPay={handlePay}
-        />
-      )}
-
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-medium text-gray-700">Últimos gastos</h3>
-          <Link href="/transactions" className="text-sm text-blue-600">Ver todos</Link>
-        </div>
-        {txs.length === 0 && <p className="text-gray-400 text-sm">Sin gastos registrados aún.</p>}
-        {txs.map((tx) => (
-          <div key={tx.id} className="flex justify-between items-center py-2 border-b last:border-0">
-            <div>
-              <p className="text-sm font-medium">{tx.descripcion_norm}</p>
-              <p className="text-xs text-gray-400">{tx.fecha_operacion}</p>
-            </div>
-            <span className={`text-sm font-medium ${tx.monto < 0 ? "text-green-600" : "text-gray-800"}`}>
-              {formatCLP(tx.monto)}
-            </span>
-          </div>
-        ))}
+    <div>
+      {/* Total del mes */}
+      <div
+        style={{
+          background: "var(--surface-card)",
+          borderRadius: "var(--radius-xl)",
+          padding: "var(--space-5)",
+          boxShadow: "var(--shadow-2)",
+          marginBottom: "var(--space-4)",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-text)",
+            fontSize: "var(--t-caption-size)",
+            color: "var(--text-tertiary)",
+            margin: "0 0 4px",
+            letterSpacing: "0.04em",
+            textTransform: "uppercase" as const,
+          }}
+        >
+          Gastos del mes
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-rounded)",
+            fontSize: "var(--t-value-size)",
+            fontWeight: "var(--t-value-weight)",
+            letterSpacing: "var(--t-value-track)",
+            fontVariantNumeric: "tabular-nums" as const,
+            color: "var(--text-primary)",
+            margin: 0,
+            lineHeight: "var(--t-value-lh)",
+          }}
+        >
+          {formatCLP(totalMes)}
+        </p>
       </div>
 
+      {/* Liquidación */}
+      {settlement && (
+        <SettlementCard data={settlement} memberNames={memberNames} onPay={handlePay} />
+      )}
+
+      {/* Últimos gastos */}
+      <p style={sectionLabel as React.CSSProperties}>Últimos gastos</p>
+
+      <div
+        style={{
+          background: "var(--surface-card)",
+          borderRadius: "var(--radius-xl)",
+          boxShadow: "var(--shadow-2)",
+          overflow: "hidden",
+          marginBottom: "var(--space-5)",
+        }}
+      >
+        {txs.length === 0 ? (
+          <p
+            style={{
+              fontFamily: "var(--font-text)",
+              fontSize: "var(--t-footnote-size)",
+              color: "var(--text-tertiary)",
+              textAlign: "center",
+              padding: "var(--space-7)",
+              margin: 0,
+            }}
+          >
+            Sin gastos registrados aún
+          </p>
+        ) : (
+          <>
+            {txs.map((tx, i) => (
+              <div key={tx.id}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "var(--space-4) var(--card-padding)",
+                    gap: "var(--space-3)",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-text)",
+                        fontSize: "var(--t-subhead-size)",
+                        fontWeight: "var(--w-medium)",
+                        color: "var(--text-primary)",
+                        margin: 0,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {tx.descripcion_norm}
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-text)",
+                        fontSize: "var(--t-caption-size)",
+                        color: "var(--text-tertiary)",
+                        margin: "2px 0 0",
+                      }}
+                    >
+                      {tx.fecha_operacion}
+                    </p>
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-text)",
+                      fontSize: "var(--t-subhead-size)",
+                      fontWeight: "var(--w-semibold)",
+                      color: tx.monto < 0 ? "var(--state-safe)" : "var(--text-primary)",
+                      flexShrink: 0,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {formatCLP(tx.monto)}
+                  </span>
+                </div>
+                {i < txs.length - 1 && (
+                  <div style={{ height: "0.5px", background: "var(--separator)", marginLeft: 16 }} />
+                )}
+              </div>
+            ))}
+
+            {/* Ver todos link */}
+            <div style={{ height: "0.5px", background: "var(--separator)" }} />
+            <Link
+              href="/transactions"
+              style={{
+                display: "block",
+                padding: "var(--space-4) var(--card-padding)",
+                fontFamily: "var(--font-text)",
+                fontSize: "var(--t-subhead-size)",
+                color: "var(--accent)",
+                textDecoration: "none",
+                fontWeight: "var(--w-medium)",
+              }}
+            >
+              Ver todos los gastos
+            </Link>
+          </>
+        )}
+      </div>
+
+      {/* FAB — agregar gasto */}
       <Link
         href="/transactions/new"
-        className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl font-medium hover:bg-blue-700"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "var(--space-3)",
+          width: "100%",
+          padding: "13px 20px",
+          background: "var(--accent)",
+          color: "var(--text-on-accent)",
+          borderRadius: "var(--radius-md)",
+          fontFamily: "var(--font-text)",
+          fontSize: 17,
+          fontWeight: "var(--w-semibold)",
+          letterSpacing: "-0.01em",
+          textDecoration: "none",
+          boxShadow: "var(--shadow-2)",
+          transition: "transform var(--dur-fast) var(--ease-standard)",
+        }}
       >
-        + Agregar gasto
+        <Plus size={20} strokeWidth={2.5} />
+        Agregar gasto
       </Link>
     </div>
   );

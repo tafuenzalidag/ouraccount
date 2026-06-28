@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { Upload, AlertTriangle } from "lucide-react";
 import { getHouseholdId, getToken } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -35,20 +36,40 @@ type PreviewResponse = {
   items: PreviewItem[];
 };
 
-type PaymentMethod = {
-  id: string;
-  alias: string;
-  tipo: string;
-};
-
-type Member = {
-  user_id: string;
-  nombre_display: string;
-};
+type PaymentMethod = { id: string; alias: string; tipo: string };
+type Member = { user_id: string; nombre_display: string };
 
 function formatCLP(n: number) {
-  return `$${Math.abs(n).toLocaleString("es-CL")}${n < 0 ? " (abono)" : ""}`;
+  return `$${Math.abs(n).toLocaleString("es-CL")}${n < 0 ? " abono" : ""}`;
 }
+
+const selectStyle: React.CSSProperties = {
+  display: "block",
+  width: "100%",
+  padding: "11px 40px 11px 14px",
+  background: "var(--bg-grouped)",
+  borderRadius: "var(--radius-sm)",
+  boxShadow: "inset 0 0 0 1px var(--separator)",
+  border: "none",
+  fontFamily: "var(--font-text)",
+  fontSize: 17,
+  color: "var(--text-primary)",
+  appearance: "none",
+  WebkitAppearance: "none",
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 14px center",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "var(--font-text)",
+  fontSize: 13,
+  fontWeight: "var(--w-semibold)",
+  color: "var(--text-secondary)",
+  letterSpacing: "-0.005em",
+  marginBottom: 6,
+  display: "block",
+};
 
 export default function ImportsPage() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -125,9 +146,7 @@ export default function ImportsPage() {
 
   function toggleIncluido(idx: number) {
     setItems((prev) =>
-      prev.map((item, i) =>
-        i === idx ? { ...item, incluido: !item.incluido } : item
-      )
+      prev.map((item, i) => (i === idx ? { ...item, incluido: !item.incluido } : item))
     );
   }
 
@@ -142,10 +161,7 @@ export default function ImportsPage() {
       const token = getToken();
       const resp = await fetch(`${API}/api/imports/${preview.batch_id}/confirm`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ payer_user_id: payerUserId, items }),
       });
       if (!resp.ok) {
@@ -154,9 +170,7 @@ export default function ImportsPage() {
       }
       const result = await resp.json();
       setSuccess(
-        `Importación exitosa: ${result.transactions_created} transacciones creadas, ` +
-          `${result.duplicates_skipped} duplicados omitidos, ` +
-          `${result.excluded_skipped} excluidos.`
+        `${result.transactions_created} transacciones creadas, ${result.duplicates_skipped} duplicados omitidos, ${result.excluded_skipped} excluidos.`
       );
       setPreview(null);
       setItems([]);
@@ -169,104 +183,219 @@ export default function ImportsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-bold">Importar cartola PDF</h1>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
 
+      {/* Success banner */}
+      {success && (
+        <div
+          style={{
+            background: "var(--state-safe-fill)",
+            borderRadius: "var(--radius-lg)",
+            padding: "var(--space-4) var(--card-padding)",
+          }}
+        >
+          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--state-safe)", fontWeight: "var(--w-semibold)", margin: 0 }}>
+            Importación exitosa
+          </p>
+          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-secondary)", margin: "4px 0 0" }}>
+            {success}
+          </p>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div
+          style={{
+            background: "var(--state-alert-fill)",
+            borderRadius: "var(--radius-lg)",
+            padding: "var(--space-4) var(--card-padding)",
+            display: "flex",
+            gap: "var(--space-3)",
+            alignItems: "flex-start",
+          }}
+        >
+          <AlertTriangle size={16} color="var(--state-alert)" style={{ marginTop: 2, flexShrink: 0 }} />
+          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)", margin: 0 }}>
+            {error}
+          </p>
+        </div>
+      )}
+
+      {/* Upload form */}
       {!preview && (
-        <form onSubmit={handleUpload} className="space-y-4">
+        <div
+          style={{
+            background: "var(--surface-card)",
+            borderRadius: "var(--radius-xl)",
+            padding: "var(--card-padding)",
+            boxShadow: "var(--shadow-2)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-5)",
+          }}
+        >
           <div>
-            <label htmlFor="pm-select" className="block text-sm font-medium mb-1">Medio de pago</label>
+            <label htmlFor="pm-select" style={labelStyle}>Medio de pago</label>
             <select
               id="pm-select"
               value={selectedPm}
               onChange={(e) => setSelectedPm(e.target.value)}
-              className="border rounded px-3 py-2 w-full"
+              style={selectStyle}
             >
               {paymentMethods.map((pm) => (
                 <option key={pm.id} value={pm.id}>
-                  {pm.alias} ({pm.tipo})
+                  {pm.alias} ({pm.tipo === "tarjeta_credito" ? "TC" : "CC"})
                 </option>
               ))}
             </select>
           </div>
+
           <div>
-            <label htmlFor="pdf-file" className="block text-sm font-medium mb-1">Archivo PDF (cartola Santander)</label>
-            <input ref={fileRef} id="pdf-file" type="file" accept=".pdf" className="block" />
+            <label htmlFor="pdf-file" style={labelStyle}>Cartola PDF (Santander)</label>
+            <div
+              style={{
+                border: "1.5px dashed var(--separator-opaque)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-7)",
+                textAlign: "center",
+                background: "var(--fill-4)",
+              }}
+            >
+              <Upload size={24} color="var(--text-tertiary)" style={{ margin: "0 auto var(--space-3)" }} />
+              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--text-secondary)", margin: "0 0 var(--space-2)" }}>
+                Selecciona un archivo
+              </p>
+              <input
+                ref={fileRef}
+                id="pdf-file"
+                type="file"
+                accept=".pdf"
+                style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-tertiary)" }}
+              />
+            </div>
           </div>
+
           <button
-            type="submit"
+            onClick={handleUpload as unknown as React.MouseEventHandler}
             disabled={uploading}
-            className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            style={{
+              width: "100%",
+              padding: "13px 20px",
+              background: "var(--accent)",
+              color: "var(--text-on-accent)",
+              border: "none",
+              borderRadius: "var(--radius-md)",
+              fontFamily: "var(--font-text)",
+              fontSize: 17,
+              fontWeight: "var(--w-semibold)",
+              letterSpacing: "-0.01em",
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.5 : 1,
+            }}
           >
-            {uploading ? "Procesando..." : "Subir y parsear"}
+            {uploading ? "Procesando…" : "Subir y parsear"}
           </button>
-        </form>
+        </div>
       )}
 
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-      {success && <p className="text-green-600 text-sm">{success}</p>}
-
+      {/* Preview */}
       {preview && (
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+
+          {/* Cuadre warning */}
           {!preview.cuadre_ok && (
-            <div className="bg-yellow-50 border border-yellow-300 rounded p-3 text-sm text-yellow-800">
-              ⚠️ {preview.advertencia ?? "El cuadre de montos no coincide con el total declarado."}
+            <div
+              style={{
+                background: "var(--state-caution-fill)",
+                borderRadius: "var(--radius-lg)",
+                padding: "var(--space-4) var(--card-padding)",
+                display: "flex",
+                gap: "var(--space-3)",
+                alignItems: "flex-start",
+              }}
+            >
+              <AlertTriangle size={16} color="var(--state-caution)" style={{ marginTop: 2, flexShrink: 0 }} />
+              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-caution)", margin: 0, fontWeight: "var(--w-medium)" }}>
+                {preview.advertencia ?? "El cuadre de montos no coincide con el total declarado."}
+              </p>
             </div>
           )}
 
-          <p className="text-sm text-gray-500">
-            {items.filter((i) => i.incluido).length} de {items.length} movimientos seleccionados.
-            Desmarca los que no quieres importar.
+          {/* Count */}
+          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-tertiary)", margin: 0, paddingLeft: 4 }}>
+            {items.filter((i) => i.incluido).length} de {items.length} movimientos seleccionados
           </p>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-2">✓</th>
-                  <th className="p-2">Fecha</th>
-                  <th className="p-2">Descripción</th>
-                  <th className="p-2">Monto</th>
-                  <th className="p-2">Tipo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, idx) => (
-                  <tr
-                    key={item.hash_dedupe}
-                    className={`border-t ${!item.incluido ? "opacity-40" : ""} ${item.es_duplicado_posible ? "bg-yellow-50" : ""}`}
-                  >
-                    <td className="p-2">
-                      <input
-                        type="checkbox"
-                        checked={item.incluido}
-                        onChange={() => toggleIncluido(idx)}
-                      />
-                    </td>
-                    <td className="p-2 whitespace-nowrap">{item.fecha_operacion}</td>
-                    <td className="p-2">
-                      <div>{item.descripcion_norm}</div>
+          {/* Items list */}
+          <div
+            style={{
+              background: "var(--surface-card)",
+              borderRadius: "var(--radius-xl)",
+              boxShadow: "var(--shadow-2)",
+              overflow: "hidden",
+            }}
+          >
+            {items.map((item, idx) => (
+              <div key={item.hash_dedupe}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "var(--space-3)",
+                    padding: "var(--space-4) var(--card-padding)",
+                    opacity: item.incluido ? 1 : 0.4,
+                    background: item.es_duplicado_posible ? "var(--state-caution-fill)" : "transparent",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={item.incluido}
+                    onChange={() => toggleIncluido(idx)}
+                    style={{ width: 18, height: 18, accentColor: "var(--accent)", marginTop: 2, flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", fontWeight: "var(--w-medium)", color: "var(--text-primary)", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {item.descripcion_norm}
+                    </p>
+                    <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center", flexWrap: "wrap" }}>
+                      <span style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-caption-size)", color: "var(--text-tertiary)" }}>
+                        {item.fecha_operacion}
+                      </span>
                       {item.es_duplicado_posible && (
-                        <span className="text-xs text-yellow-700">posible duplicado</span>
+                        <span style={{ fontFamily: "var(--font-text)", fontSize: 11, fontWeight: "var(--w-semibold)", color: "var(--state-caution)" }}>
+                          posible duplicado
+                        </span>
                       )}
                       {item.installment && (
-                        <span className="text-xs text-blue-600">
+                        <span style={{ fontFamily: "var(--font-text)", fontSize: 11, fontWeight: "var(--w-semibold)", color: "var(--state-on-strong)" }}>
                           cuota {item.installment.cuota_actual}/{item.installment.cuotas_totales}
                         </span>
                       )}
-                    </td>
-                    <td className={`p-2 whitespace-nowrap ${item.monto < 0 ? "text-green-600" : ""}`}>
-                      {formatCLP(item.monto)}
-                    </td>
-                    <td className="p-2 text-xs text-gray-500">{item.tipo_movimiento}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                  <span style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", fontWeight: "var(--w-semibold)", color: item.monto < 0 ? "var(--state-safe)" : "var(--text-primary)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+                    {formatCLP(item.monto)}
+                  </span>
+                </label>
+                {idx < items.length - 1 && (
+                  <div style={{ height: "0.5px", background: "var(--separator)", marginLeft: 16 }} />
+                )}
+              </div>
+            ))}
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="payer-id" className="block text-sm font-medium">
+          {/* Payer selection */}
+          <div
+            style={{
+              background: "var(--surface-card)",
+              borderRadius: "var(--radius-xl)",
+              padding: "var(--card-padding)",
+              boxShadow: "var(--shadow-2)",
+            }}
+          >
+            <label htmlFor="payer-id" style={{ ...labelStyle, marginBottom: "var(--space-3)" }}>
               ¿Quién pagó la tarjeta?
             </label>
             {members.length > 0 ? (
@@ -274,12 +403,10 @@ export default function ImportsPage() {
                 id="payer-id"
                 value={payerUserId}
                 onChange={(e) => setPayerUserId(e.target.value)}
-                className="border rounded px-3 py-2 w-full text-sm bg-gray-900 border-white/10"
+                style={selectStyle}
               >
                 {members.map((m) => (
-                  <option key={m.user_id} value={m.user_id}>
-                    {m.nombre_display}
-                  </option>
+                  <option key={m.user_id} value={m.user_id}>{m.nombre_display}</option>
                 ))}
               </select>
             ) : (
@@ -288,23 +415,57 @@ export default function ImportsPage() {
                 type="text"
                 value={payerUserId}
                 onChange={(e) => setPayerUserId(e.target.value)}
-                placeholder="uuid del pagador"
-                className="border rounded px-3 py-2 w-full font-mono text-sm"
+                placeholder="UUID del pagador"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  padding: "11px 14px",
+                  background: "var(--bg-grouped)",
+                  borderRadius: "var(--radius-sm)",
+                  boxShadow: "inset 0 0 0 1px var(--separator)",
+                  border: "none",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 15,
+                  color: "var(--text-primary)",
+                }}
               />
             )}
           </div>
 
-          <div className="flex gap-3">
+          {/* Actions */}
+          <div style={{ display: "flex", gap: "var(--space-3)" }}>
             <button
               onClick={handleConfirm}
               disabled={confirming}
-              className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50"
+              style={{
+                flex: 1,
+                padding: "13px 20px",
+                background: "var(--accent)",
+                color: "var(--text-on-accent)",
+                border: "none",
+                borderRadius: "var(--radius-md)",
+                fontFamily: "var(--font-text)",
+                fontSize: 17,
+                fontWeight: "var(--w-semibold)",
+                cursor: confirming ? "not-allowed" : "pointer",
+                opacity: confirming ? 0.5 : 1,
+              }}
             >
-              {confirming ? "Confirmando..." : "Confirmar importación"}
+              {confirming ? "Confirmando…" : "Confirmar"}
             </button>
             <button
               onClick={() => { setPreview(null); setItems([]); setError(null); setPayerUserId(""); }}
-              className="border px-4 py-2 rounded text-gray-600"
+              style={{
+                padding: "13px 20px",
+                background: "var(--fill-3)",
+                color: "var(--text-primary)",
+                border: "none",
+                borderRadius: "var(--radius-md)",
+                fontFamily: "var(--font-text)",
+                fontSize: 17,
+                fontWeight: "var(--w-medium)",
+                cursor: "pointer",
+              }}
             >
               Cancelar
             </button>
