@@ -145,6 +145,7 @@ export default function ImportsPage() {
       );
       setPreview(null);
       setItems([]);
+      setPayerUserId("");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -159,8 +160,9 @@ export default function ImportsPage() {
       {!preview && (
         <form onSubmit={handleUpload} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Medio de pago</label>
+            <label htmlFor="pm-select" className="block text-sm font-medium mb-1">Medio de pago</label>
             <select
+              id="pm-select"
               value={selectedPm}
               onChange={(e) => setSelectedPm(e.target.value)}
               className="border rounded px-3 py-2 w-full"
@@ -173,8 +175,8 @@ export default function ImportsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Archivo PDF (cartola Santander)</label>
-            <input ref={fileRef} type="file" accept=".pdf" className="block" />
+            <label htmlFor="pdf-file" className="block text-sm font-medium mb-1">Archivo PDF (cartola Santander)</label>
+            <input ref={fileRef} id="pdf-file" type="file" accept=".pdf" className="block" />
           </div>
           <button
             type="submit"
@@ -191,9 +193,9 @@ export default function ImportsPage() {
 
       {preview && (
         <div className="space-y-4">
-          {!preview.cuadre_ok && preview.advertencia && (
+          {!preview.cuadre_ok && (
             <div className="bg-yellow-50 border border-yellow-300 rounded p-3 text-sm text-yellow-800">
-              ⚠️ {preview.advertencia}
+              ⚠️ {preview.advertencia ?? "El cuadre de montos no coincide con el total declarado."}
             </div>
           )}
 
@@ -216,7 +218,7 @@ export default function ImportsPage() {
               <tbody>
                 {items.map((item, idx) => (
                   <tr
-                    key={idx}
+                    key={item.hash_dedupe}
                     className={`border-t ${!item.incluido ? "opacity-40" : ""} ${item.es_duplicado_posible ? "bg-yellow-50" : ""}`}
                   >
                     <td className="p-2">
@@ -249,11 +251,12 @@ export default function ImportsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium">
+            <label htmlFor="payer-id" className="block text-sm font-medium">
               ID del usuario que pagó la tarjeta
               <span className="text-gray-400 font-normal ml-1">(pega el user ID desde la URL o settings)</span>
             </label>
             <input
+              id="payer-id"
               type="text"
               value={payerUserId}
               onChange={(e) => setPayerUserId(e.target.value)}
@@ -271,7 +274,7 @@ export default function ImportsPage() {
               {confirming ? "Confirmando..." : "Confirmar importación"}
             </button>
             <button
-              onClick={() => { setPreview(null); setItems([]); setError(null); }}
+              onClick={() => { setPreview(null); setItems([]); setError(null); setPayerUserId(""); }}
               className="border px-4 py-2 rounded text-gray-600"
             >
               Cancelar
