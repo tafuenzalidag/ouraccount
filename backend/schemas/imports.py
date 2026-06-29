@@ -1,6 +1,7 @@
 from datetime import date as date_type
 from pydantic import BaseModel
 from typing import Optional
+from schemas.duplicates import TxSnippet
 
 
 class InstallmentIn(BaseModel):
@@ -25,6 +26,7 @@ class PreviewItemOut(BaseModel):
     installment: Optional[InstallmentIn]
     hash_dedupe: str
     es_duplicado_posible: bool
+    fuzzy_matches: list[TxSnippet] = []
 
 
 class ImportPreviewOut(BaseModel):

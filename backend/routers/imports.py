@@ -16,6 +16,8 @@ from services.pdf_parser import parse_pdf_bytes
 from services.categorizer import apply_category
 from services.split import compute_split
 from services.text_utils import dedupe_hash
+from services.duplicate_detector import find_fuzzy_for_import
+from schemas.duplicates import TxSnippet
 
 router = APIRouter(prefix="/api", tags=["imports"])
 
@@ -74,8 +76,10 @@ async def upload_pdf(
         .all()
     }
 
+    fuzzy_map = find_fuzzy_for_import(result.items, hh_int, db)
+
     preview_items: list[PreviewItemOut] = []
-    for item in result.items:
+    for idx, item in enumerate(result.items):
         cat_id, es_hogar_default = apply_category(item.descripcion_norm, hh_int, db)
         es_hogar = item.es_hogar if item.es_interno else es_hogar_default
         installment_out = None
@@ -87,6 +91,17 @@ async def upload_pdf(
                 cuotas_totales=item.installment.cuotas_totales,
                 valor_cuota_mensual=item.installment.valor_cuota_mensual,
             )
+        fuzzy_snippets: list[TxSnippet] = []
+        for match_tx in fuzzy_map.get(idx, []):
+            pm_obj = db.query(PaymentMethod).filter(PaymentMethod.id == match_tx.payment_method_id).first()
+            fuzzy_snippets.append(TxSnippet(
+                external_id=encode("tx_", match_tx.id),
+                fecha_operacion=match_tx.fecha_operacion,
+                descripcion_raw=match_tx.descripcion_raw,
+                monto=match_tx.monto,
+                origen="importado" if match_tx.import_batch_id else "manual",
+                payment_method_alias=pm_obj.alias if pm_obj else "",
+            ))
         preview_items.append(
             PreviewItemOut(
                 fecha_operacion=item.fecha_operacion,
@@ -102,6 +117,7 @@ async def upload_pdf(
                 installment=installment_out,
                 hash_dedupe=item.hash_dedupe,
                 es_duplicado_posible=item.hash_dedupe in existing_hashes,
+                fuzzy_matches=fuzzy_snippets,
             )
         )
 

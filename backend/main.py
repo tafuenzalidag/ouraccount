@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, households, payment_methods, categories, transactions, settlements, imports
+from routers import auth, households, payment_methods, categories, transactions, settlements, imports, duplicates
 
 app = FastAPI(title="NuestraCuenta API", version="0.1.0")
 
@@ -25,6 +25,7 @@ app.include_router(categories.router)
 app.include_router(transactions.router)
 app.include_router(settlements.router)
 app.include_router(imports.router)
+app.include_router(duplicates.router)
 
 @app.get("/api/health")
 def health():

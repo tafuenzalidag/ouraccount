@@ -1,7 +1,8 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, HouseholdMember, Transaction, PaymentMethod, Category
+from models import User, HouseholdMember, Transaction, PaymentMethod, Category, SplitAllocation
 from schemas.transaction import TransactionCreate, TransactionOut
 from services.auth import get_current_user
 from services.id_codec import encode, decode
@@ -119,3 +120,29 @@ def create_transaction(
     db.commit()
     db.refresh(tx)
     return _tx_out(tx)
+
+
+@router.delete("/{household_id}/transactions/{tx_id}", status_code=204)
+def delete_transaction(
+    household_id: str,
+    tx_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _, hh_int = decode(household_id)
+    _, tx_int = decode(tx_id)
+    _assert_member(hh_int, current_user, db)
+    tx = db.query(Transaction).filter(
+        Transaction.id == tx_int,
+        Transaction.household_id == hh_int,
+        Transaction.deleted_at.is_(None),
+    ).first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transacción no encontrada")
+    now = datetime.utcnow()
+    tx.deleted_at = now
+    db.query(SplitAllocation).filter(
+        SplitAllocation.transaction_id == tx_int,
+        SplitAllocation.deleted_at.is_(None),
+    ).update({"deleted_at": now})
+    db.commit()
