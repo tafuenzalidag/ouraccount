@@ -2,8 +2,18 @@
 import { useState, useEffect, useRef } from "react";
 import { Upload, AlertTriangle } from "lucide-react";
 import { getHouseholdId, getToken } from "@/lib/auth";
+import { DuplicateModal } from "@/components/DuplicateModal";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "";
+
+type TxSnippet = {
+  external_id: string;
+  fecha_operacion: string;
+  descripcion_raw: string;
+  monto: number;
+  origen: "manual" | "importado";
+  payment_method_alias: string;
+};
 
 type InstallmentPreview = {
   descripcion: string;
@@ -27,6 +37,7 @@ type PreviewItem = {
   installment: InstallmentPreview | null;
   hash_dedupe: string;
   es_duplicado_posible: boolean;
+  fuzzy_matches: TxSnippet[];
 };
 
 type PreviewResponse = {
@@ -83,6 +94,8 @@ export default function ImportsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [payerUserId, setPayerUserId] = useState("");
   const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [fuzzyPairs, setFuzzyPairs] = useState<{ importItem: PreviewItem; matches: TxSnippet[] }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -137,6 +150,11 @@ export default function ImportsPage() {
       const data: PreviewResponse = await resp.json();
       setPreview(data);
       setItems(data.items);
+      const pairs = data.items
+        .map((item: PreviewItem) => ({ importItem: item, matches: item.fuzzy_matches }))
+        .filter((p) => p.matches.length > 0);
+      setFuzzyPairs(pairs);
+      if (pairs.length > 0) setShowDuplicateModal(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -368,6 +386,15 @@ export default function ImportsPage() {
                           posible duplicado
                         </span>
                       )}
+                      {item.fuzzy_matches.length > 0 && (
+                        <span style={{
+                          fontSize: "var(--text-xs)", padding: "2px 6px",
+                          background: "#fef9c3", color: "#854d0e",
+                          borderRadius: "var(--radius-pill)", marginLeft: 6,
+                        }}>
+                          ⚠ posible duplicado
+                        </span>
+                      )}
                       {item.installment && (
                         <span style={{ fontFamily: "var(--font-text)", fontSize: 11, fontWeight: "var(--w-semibold)", color: "var(--state-on-strong)" }}>
                           cuota {item.installment.cuota_actual}/{item.installment.cuotas_totales}
@@ -471,6 +498,13 @@ export default function ImportsPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {showDuplicateModal && fuzzyPairs.length > 0 && (
+        <DuplicateModal
+          pairs={fuzzyPairs}
+          onClose={() => setShowDuplicateModal(false)}
+        />
       )}
     </div>
   );
