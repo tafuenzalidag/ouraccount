@@ -70,7 +70,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
 
   const [nombre, setNombre] = useState("");
-  const [ratioA, setRatioA] = useState("0.57");
+  const [ratioA, setRatioA] = useState("57");
   const [nombreA, setNombreA] = useState("");
   const [code, setCode] = useState("");
 
@@ -113,13 +113,13 @@ export default function SettingsPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const ratio = parseFloat(ratioA);
-    if (isNaN(ratio) || ratio <= 0 || ratio >= 1) { setError("El ratio debe estar entre 0 y 1 (ej. 0.57)"); return; }
+    const pct = parseFloat(ratioA);
+    if (isNaN(pct) || pct < 1 || pct > 99) { setError("El porcentaje debe estar entre 1 y 99"); return; }
     setLoading(true);
     try {
       const h = await apiFetch<HouseholdOut>("/api/households", {
         method: "POST",
-        body: JSON.stringify({ nombre, ratio_a: ratio, nombre_display_a: nombreA || null }),
+        body: JSON.stringify({ nombre, ratio_a: pct / 100, nombre_display_a: nombreA || null }),
       });
       setHouseholdId(h.id);
       router.push("/dashboard");
@@ -537,9 +537,32 @@ export default function SettingsPage() {
             </div>
             <div>
               <label style={labelStyle}>Tu porcentaje de gastos</label>
-              <input required type="number" step="0.01" min="0.01" max="0.99" value={ratioA} onChange={(e) => setRatioA(e.target.value)} style={s("ratio")} onFocus={() => setFocused("ratio")} onBlur={() => setFocused(null)} />
-              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-caption-size)", color: "var(--text-tertiary)", margin: "6px 0 0", paddingLeft: 4 }}>
-                Ej: 0.57 = pagas el 57% de los gastos del hogar
+              <div style={{ position: "relative" }}>
+                <input
+                  required
+                  type="number"
+                  step="1"
+                  min="1"
+                  max="99"
+                  value={ratioA}
+                  onChange={(e) => setRatioA(e.target.value)}
+                  style={{ ...s("ratio"), paddingRight: 36 }}
+                  onFocus={() => setFocused("ratio")}
+                  onBlur={() => setFocused(null)}
+                />
+                <span style={{
+                  position: "absolute",
+                  right: 14,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 17,
+                  color: "#8E8E93",
+                  pointerEvents: "none",
+                  userSelect: "none",
+                }}>%</span>
+              </div>
+              <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--text-muted)", margin: "6px 0 0", paddingLeft: 4 }}>
+                El resto lo paga tu pareja automáticamente
               </p>
             </div>
             {error && <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)", margin: 0 }}>{error}</p>}
