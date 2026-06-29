@@ -1,7 +1,6 @@
 # backend/services/duplicate_detector.py
 from datetime import timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
 from models import Transaction, DismissedDuplicatePair
 
 

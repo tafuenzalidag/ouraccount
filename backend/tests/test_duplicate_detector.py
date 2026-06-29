@@ -1,6 +1,6 @@
 # backend/tests/test_duplicate_detector.py
-from datetime import date, timedelta
-from models import Transaction, ImportBatch, User, Household, HouseholdMember, PaymentMethod, Category
+from datetime import date, datetime, timedelta
+from models import Transaction, ImportBatch, User, Household, PaymentMethod
 from services.duplicate_detector import find_fuzzy_for_import, find_all_candidates
 from services.text_utils import dedupe_hash
 
@@ -68,6 +68,36 @@ def test_find_fuzzy_skips_exact_hash_match(db):
     result = find_fuzzy_for_import([FakeItem()], h.id, db)
     assert result == {}
 
+def test_find_fuzzy_for_import_skips_interno(db):
+    u, h, pm = _seed(db)
+    # existing transaction that is internal — should NOT match
+    existing = _tx(db, h.id, pm.id, u.id, 50000, date(2024, 3, 1))
+    existing.es_interno = True
+    db.commit()
+
+    class FakeItem:
+        monto = 50000
+        fecha_operacion = date(2024, 3, 1)
+        hash_dedupe = "different_hash"
+
+    result = find_fuzzy_for_import([FakeItem()], h.id, db)
+    assert result == {}
+
+def test_find_fuzzy_for_import_excludes_deleted(db):
+    u, h, pm = _seed(db)
+    # existing transaction that is soft-deleted — should NOT match
+    existing = _tx(db, h.id, pm.id, u.id, 75000, date(2024, 4, 1))
+    existing.deleted_at = datetime.utcnow()
+    db.commit()
+
+    class FakeItem:
+        monto = 75000
+        fecha_operacion = date(2024, 4, 1)
+        hash_dedupe = "another_hash"
+
+    result = find_fuzzy_for_import([FakeItem()], h.id, db)
+    assert result == {}
+
 def test_find_all_candidates_returns_manual_vs_imported_pair(db):
     u, h, pm = _seed(db)
     ib = ImportBatch(household_id=h.id, payment_method_id=pm.id,
@@ -88,7 +118,6 @@ def test_find_all_candidates_excludes_deleted(db):
                      archivo_origen="pdf", estado="confirmado")
     db.add(ib)
     db.flush()
-    from datetime import datetime
     manual = _tx(db, h.id, pm.id, u.id, 30000, date(2024, 2, 1))
     manual.deleted_at = datetime.utcnow()
     imported = _tx(db, h.id, pm.id, u.id, 30000, date(2024, 2, 2), import_batch_id=ib.id)
