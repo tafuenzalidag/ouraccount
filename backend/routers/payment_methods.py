@@ -88,15 +88,16 @@ def delete_payment_method(
     pm = db.query(PaymentMethod).filter(
         PaymentMethod.id == pm_int,
         PaymentMethod.household_id == hh_int,
+        PaymentMethod.deleted_at.is_(None),
     ).first()
     if not pm:
         raise HTTPException(status_code=404, detail="Medio de pago no encontrado")
-    if db.query(Transaction).filter(Transaction.payment_method_id == pm_int).first():
+    if db.query(Transaction).filter(Transaction.payment_method_id == pm_int, Transaction.deleted_at.is_(None)).first():
         raise HTTPException(
             status_code=409,
             detail="Este medio de pago tiene transacciones asociadas y no puede eliminarse",
         )
-    if db.query(ImportBatch).filter(ImportBatch.payment_method_id == pm_int).first():
+    if db.query(ImportBatch).filter(ImportBatch.payment_method_id == pm_int, ImportBatch.deleted_at.is_(None)).first():
         raise HTTPException(
             status_code=409,
             detail="Este medio de pago tiene importaciones asociadas y no puede eliminarse",

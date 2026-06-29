@@ -52,6 +52,7 @@ def get_settlement(
         Settlement.periodo_desde == desde,
         Settlement.periodo_hasta == hasta,
         Settlement.estado == "pendiente",
+        Settlement.deleted_at.is_(None),
     ).first()
 
     if settlement:

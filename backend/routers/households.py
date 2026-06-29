@@ -132,6 +132,7 @@ def get_members(
     members = db.query(HouseholdMember).filter(
         HouseholdMember.household_id == hh_int,
         HouseholdMember.user_id != None,
+        HouseholdMember.deleted_at.is_(None),
     ).all()
     users = {
         u.id: u
