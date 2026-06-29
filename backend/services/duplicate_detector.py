@@ -16,6 +16,7 @@ def find_fuzzy_for_import(items, household_id: int, db: Session, window_days: in
             Transaction.fecha_operacion >= lo,
             Transaction.fecha_operacion <= hi,
             Transaction.deleted_at.is_(None),
+            Transaction.es_interno == False,
             Transaction.hash_dedupe != item.hash_dedupe,
         ).all()
         if matches:
@@ -51,6 +52,7 @@ def find_all_candidates(household_id: int, db: Session, window_days: int = 3) ->
             Transaction.fecha_operacion <= hi,
             Transaction.import_batch_id.isnot(None),
             Transaction.deleted_at.is_(None),
+            Transaction.es_interno == False,
         ).all()
         for c in candidates:
             pair_key = (min(tx.id, c.id), max(tx.id, c.id))

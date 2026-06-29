@@ -96,3 +96,18 @@ def test_find_all_candidates_excludes_deleted(db):
 
     pairs = find_all_candidates(h.id, db)
     assert pairs == []
+
+def test_find_all_candidates_excludes_internal(db):
+    u, h, pm = _seed(db)
+    ib = ImportBatch(household_id=h.id, payment_method_id=pm.id,
+                     archivo_origen="pdf", estado="confirmado")
+    db.add(ib)
+    db.flush()
+    manual = _tx(db, h.id, pm.id, u.id, 30000, date(2024, 2, 1))
+    # imported but internal — should NOT appear as candidate
+    internal = _tx(db, h.id, pm.id, u.id, 30000, date(2024, 2, 2), import_batch_id=ib.id)
+    internal.es_interno = True
+    db.commit()
+
+    pairs = find_all_candidates(h.id, db)
+    assert pairs == []
