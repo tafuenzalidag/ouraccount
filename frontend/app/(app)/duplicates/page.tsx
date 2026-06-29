@@ -54,7 +54,7 @@ export default function DuplicatesPage() {
   const householdId = typeof window !== "undefined" ? getHouseholdId() : null;
 
   useEffect(() => {
-    if (!token || !householdId) return;
+    if (!token || !householdId) { setLoading(false); return; }
     fetch(`${API}/api/households/${householdId}/duplicate-candidates`, {
       headers: { Authorization: `Bearer ${token}` },
     })
