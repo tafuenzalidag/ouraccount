@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
@@ -13,6 +14,7 @@ def _assert_member(hh_int: int, user: User, db: Session):
     m = db.query(HouseholdMember).filter(
         HouseholdMember.household_id == hh_int,
         HouseholdMember.user_id == user.id,
+        HouseholdMember.deleted_at.is_(None),
     ).first()
     if not m:
         raise HTTPException(status_code=403, detail="No perteneces a este hogar")
@@ -102,6 +104,6 @@ def delete_payment_method(
             status_code=409,
             detail="Este medio de pago tiene importaciones asociadas y no puede eliminarse",
         )
-    db.delete(pm)
+    pm.deleted_at = datetime.utcnow()
     db.commit()
     return {"ok": True}

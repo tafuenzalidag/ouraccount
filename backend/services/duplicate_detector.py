@@ -52,6 +52,7 @@ def find_all_candidates(household_id: int, db: Session, window_days: int = 3) ->
             Transaction.import_batch_id.isnot(None),
             Transaction.deleted_at.is_(None),
             Transaction.es_interno == False,
+            Transaction.hash_dedupe != tx.hash_dedupe,
         ).all()
         for c in candidates:
             pair_key = (min(tx.id, c.id), max(tx.id, c.id))
