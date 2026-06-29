@@ -77,7 +77,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: 17,
-              fontWeight: "var(--w-semibold)",
+              fontWeight: "var(--weight-semibold)",
               color: "var(--text-strong)",
               letterSpacing: "-0.01em",
             }}
@@ -97,7 +97,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   border: "none",
                   cursor: "pointer",
                   padding: "4px 0",
-                  fontWeight: "var(--w-medium)",
+                  fontWeight: "var(--weight-medium)",
                 }}
               >
                 Salir
@@ -159,7 +159,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 style={{
                   fontFamily: "var(--font-sans)",
                   fontSize: 10,
-                  fontWeight: sel ? "var(--w-semibold)" : "var(--w-medium)",
+                  fontWeight: sel ? "var(--weight-semibold)" : "var(--weight-medium)",
                   letterSpacing: "0.01em",
                   lineHeight: 1,
                 }}
