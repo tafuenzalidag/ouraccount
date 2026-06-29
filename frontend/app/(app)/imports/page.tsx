@@ -58,13 +58,13 @@ const selectStyle: React.CSSProperties = {
   display: "block",
   width: "100%",
   padding: "11px 40px 11px 14px",
-  background: "var(--bg-grouped)",
+  background: "var(--surface-muted)",
   borderRadius: "var(--radius-sm)",
-  boxShadow: "inset 0 0 0 1px var(--separator)",
+  boxShadow: "inset 0 0 0 1px var(--border)",
   border: "none",
-  fontFamily: "var(--font-text)",
+  fontFamily: "var(--font-sans)",
   fontSize: 17,
-  color: "var(--text-primary)",
+  color: "var(--text-body)",
   appearance: "none",
   WebkitAppearance: "none",
   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
@@ -73,9 +73,9 @@ const selectStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: "var(--font-text)",
+  fontFamily: "var(--font-sans)",
   fontSize: 13,
-  fontWeight: "var(--w-semibold)",
+  fontWeight: "var(--weight-semibold)",
   color: "var(--text-secondary)",
   letterSpacing: "-0.005em",
   marginBottom: 6,
@@ -207,15 +207,15 @@ export default function ImportsPage() {
       {success && (
         <div
           style={{
-            background: "var(--state-safe-fill)",
+            background: "var(--positive-soft)",
             borderRadius: "var(--radius-lg)",
-            padding: "var(--space-4) var(--card-padding)",
+            padding: "var(--space-4) var(--space-4)",
           }}
         >
-          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--state-safe)", fontWeight: "var(--w-semibold)", margin: 0 }}>
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-base)", color: "var(--positive)", fontWeight: "var(--weight-semibold)", margin: 0 }}>
             Importación exitosa
           </p>
-          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-secondary)", margin: "4px 0 0" }}>
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--text-secondary)", margin: "4px 0 0" }}>
             {success}
           </p>
         </div>
@@ -225,16 +225,16 @@ export default function ImportsPage() {
       {error && (
         <div
           style={{
-            background: "var(--state-alert-fill)",
+            background: "var(--negative-soft)",
             borderRadius: "var(--radius-lg)",
-            padding: "var(--space-4) var(--card-padding)",
+            padding: "var(--space-4) var(--space-4)",
             display: "flex",
             gap: "var(--space-3)",
             alignItems: "flex-start",
           }}
         >
-          <AlertTriangle size={16} color="var(--state-alert)" style={{ marginTop: 2, flexShrink: 0 }} />
-          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-alert)", margin: 0 }}>
+          <AlertTriangle size={16} color="var(--negative)" style={{ marginTop: 2, flexShrink: 0 }} />
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--negative)", margin: 0 }}>
             {error}
           </p>
         </div>
@@ -244,10 +244,10 @@ export default function ImportsPage() {
       {!preview && (
         <div
           style={{
-            background: "var(--surface-card)",
+            background: "var(--surface)",
             borderRadius: "var(--radius-xl)",
-            padding: "var(--card-padding)",
-            boxShadow: "var(--shadow-2)",
+            padding: "var(--space-4)",
+            boxShadow: "var(--shadow-sm)",
             display: "flex",
             flexDirection: "column",
             gap: "var(--space-5)",
@@ -273,15 +273,15 @@ export default function ImportsPage() {
             <label htmlFor="pdf-file" style={labelStyle}>Cartola PDF (Santander)</label>
             <div
               style={{
-                border: "1.5px dashed var(--separator-opaque)",
+                border: "1.5px dashed var(--border-strong)",
                 borderRadius: "var(--radius-md)",
                 padding: "var(--space-7)",
                 textAlign: "center",
-                background: "var(--fill-4)",
+                background: "var(--background)",
               }}
             >
-              <Upload size={24} color="var(--text-tertiary)" style={{ margin: "0 auto var(--space-3)" }} />
-              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", color: "var(--text-secondary)", margin: "0 0 var(--space-2)" }}>
+              <Upload size={24} color="var(--text-muted)" style={{ margin: "0 auto var(--space-3)" }} />
+              <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-base)", color: "var(--text-secondary)", margin: "0 0 var(--space-2)" }}>
                 Selecciona un archivo
               </p>
               <input
@@ -289,7 +289,7 @@ export default function ImportsPage() {
                 id="pdf-file"
                 type="file"
                 accept=".pdf"
-                style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-tertiary)" }}
+                style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--text-muted)" }}
               />
             </div>
           </div>
@@ -304,9 +304,9 @@ export default function ImportsPage() {
               color: "var(--text-on-accent)",
               border: "none",
               borderRadius: "var(--radius-md)",
-              fontFamily: "var(--font-text)",
+              fontFamily: "var(--font-sans)",
               fontSize: 17,
-              fontWeight: "var(--w-semibold)",
+              fontWeight: "var(--weight-semibold)",
               letterSpacing: "-0.01em",
               cursor: uploading ? "not-allowed" : "pointer",
               opacity: uploading ? 0.5 : 1,
@@ -327,30 +327,30 @@ export default function ImportsPage() {
               style={{
                 background: "var(--state-caution-fill)",
                 borderRadius: "var(--radius-lg)",
-                padding: "var(--space-4) var(--card-padding)",
+                padding: "var(--space-4) var(--space-4)",
                 display: "flex",
                 gap: "var(--space-3)",
                 alignItems: "flex-start",
               }}
             >
               <AlertTriangle size={16} color="var(--state-caution)" style={{ marginTop: 2, flexShrink: 0 }} />
-              <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--state-caution)", margin: 0, fontWeight: "var(--w-medium)" }}>
+              <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--state-caution)", margin: 0, fontWeight: "var(--weight-medium)" }}>
                 {preview.advertencia ?? "El cuadre de montos no coincide con el total declarado."}
               </p>
             </div>
           )}
 
           {/* Count */}
-          <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-footnote-size)", color: "var(--text-tertiary)", margin: 0, paddingLeft: 4 }}>
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--text-muted)", margin: 0, paddingLeft: 4 }}>
             {items.filter((i) => i.incluido).length} de {items.length} movimientos seleccionados
           </p>
 
           {/* Items list */}
           <div
             style={{
-              background: "var(--surface-card)",
+              background: "var(--surface)",
               borderRadius: "var(--radius-xl)",
-              boxShadow: "var(--shadow-2)",
+              boxShadow: "var(--shadow-sm)",
               overflow: "hidden",
             }}
           >
@@ -361,7 +361,7 @@ export default function ImportsPage() {
                     display: "flex",
                     alignItems: "flex-start",
                     gap: "var(--space-3)",
-                    padding: "var(--space-4) var(--card-padding)",
+                    padding: "var(--space-4) var(--space-4)",
                     opacity: item.incluido ? 1 : 0.4,
                     background: item.es_duplicado_posible ? "var(--state-caution-fill)" : "transparent",
                     cursor: "pointer",
@@ -374,15 +374,15 @@ export default function ImportsPage() {
                     style={{ width: 18, height: 18, accentColor: "var(--accent)", marginTop: 2, flexShrink: 0 }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", fontWeight: "var(--w-medium)", color: "var(--text-primary)", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <p style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-base)", fontWeight: "var(--weight-medium)", color: "var(--text-body)", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {item.descripcion_norm}
                     </p>
                     <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center", flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-caption-size)", color: "var(--text-tertiary)" }}>
+                      <span style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
                         {item.fecha_operacion}
                       </span>
                       {item.es_duplicado_posible && (
-                        <span style={{ fontFamily: "var(--font-text)", fontSize: 11, fontWeight: "var(--w-semibold)", color: "var(--state-caution)" }}>
+                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: "var(--weight-semibold)", color: "var(--state-caution)" }}>
                           posible duplicado
                         </span>
                       )}
@@ -396,18 +396,18 @@ export default function ImportsPage() {
                         </span>
                       )}
                       {item.installment && (
-                        <span style={{ fontFamily: "var(--font-text)", fontSize: 11, fontWeight: "var(--w-semibold)", color: "var(--state-on-strong)" }}>
+                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: "var(--weight-semibold)", color: "var(--text-on-accent)" }}>
                           cuota {item.installment.cuota_actual}/{item.installment.cuotas_totales}
                         </span>
                       )}
                     </div>
                   </div>
-                  <span style={{ fontFamily: "var(--font-text)", fontSize: "var(--t-subhead-size)", fontWeight: "var(--w-semibold)", color: item.monto < 0 ? "var(--state-safe)" : "var(--text-primary)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+                  <span style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-base)", fontWeight: "var(--weight-semibold)", color: item.monto < 0 ? "var(--positive)" : "var(--text-body)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
                     {formatCLP(item.monto)}
                   </span>
                 </label>
                 {idx < items.length - 1 && (
-                  <div style={{ height: "0.5px", background: "var(--separator)", marginLeft: 16 }} />
+                  <div style={{ height: "0.5px", background: "var(--border)", marginLeft: 16 }} />
                 )}
               </div>
             ))}
@@ -416,10 +416,10 @@ export default function ImportsPage() {
           {/* Payer selection */}
           <div
             style={{
-              background: "var(--surface-card)",
+              background: "var(--surface)",
               borderRadius: "var(--radius-xl)",
-              padding: "var(--card-padding)",
-              boxShadow: "var(--shadow-2)",
+              padding: "var(--space-4)",
+              boxShadow: "var(--shadow-sm)",
             }}
           >
             <label htmlFor="payer-id" style={{ ...labelStyle, marginBottom: "var(--space-3)" }}>
@@ -447,13 +447,13 @@ export default function ImportsPage() {
                   display: "block",
                   width: "100%",
                   padding: "11px 14px",
-                  background: "var(--bg-grouped)",
+                  background: "var(--surface-muted)",
                   borderRadius: "var(--radius-sm)",
-                  boxShadow: "inset 0 0 0 1px var(--separator)",
+                  boxShadow: "inset 0 0 0 1px var(--border)",
                   border: "none",
                   fontFamily: "var(--font-mono)",
                   fontSize: 15,
-                  color: "var(--text-primary)",
+                  color: "var(--text-body)",
                 }}
               />
             )}
@@ -471,9 +471,9 @@ export default function ImportsPage() {
                 color: "var(--text-on-accent)",
                 border: "none",
                 borderRadius: "var(--radius-md)",
-                fontFamily: "var(--font-text)",
+                fontFamily: "var(--font-sans)",
                 fontSize: 17,
-                fontWeight: "var(--w-semibold)",
+                fontWeight: "var(--weight-semibold)",
                 cursor: confirming ? "not-allowed" : "pointer",
                 opacity: confirming ? 0.5 : 1,
               }}
@@ -484,13 +484,13 @@ export default function ImportsPage() {
               onClick={() => { setPreview(null); setItems([]); setError(null); setPayerUserId(""); }}
               style={{
                 padding: "13px 20px",
-                background: "var(--fill-3)",
-                color: "var(--text-primary)",
+                background: "var(--surface-muted)",
+                color: "var(--text-body)",
                 border: "none",
                 borderRadius: "var(--radius-md)",
-                fontFamily: "var(--font-text)",
+                fontFamily: "var(--font-sans)",
                 fontSize: 17,
-                fontWeight: "var(--w-medium)",
+                fontWeight: "var(--weight-medium)",
                 cursor: "pointer",
               }}
             >

@@ -1,9 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 /* NuestraCuenta Design System — tokens
    Source: claude.ai/design/p/1f56a3fd-c53d-4c96-89c9-00183dd51505 */
-
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
 
 :root {
   /* Neutral ramp */
@@ -68,6 +67,8 @@
   --positive-soft:    var(--green-50);
   --negative:         var(--red-500);
   --negative-soft:    var(--red-50);
+  --state-caution:      #d97706;
+  --state-caution-fill: #fffbeb;
   --primary:          var(--neutral-900);
   --primary-fg:       var(--neutral-50);
 
