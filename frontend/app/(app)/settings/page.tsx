@@ -121,7 +121,7 @@ export default function SettingsPage() {
         method: "POST",
         body: JSON.stringify({ nombre, ratio_a: pct / 100, nombre_display_a: nombreA || null }),
       });
-      setHouseholdId(h.id);
+      setHouseholdId(h.external_id);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear el hogar");
@@ -139,7 +139,7 @@ export default function SettingsPage() {
         method: "POST",
         body: JSON.stringify({ code: code.trim().toUpperCase() }),
       });
-      setHouseholdId(h.id);
+      setHouseholdId(h.external_id);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Código inválido o expirado");
@@ -153,7 +153,7 @@ export default function SettingsPage() {
     setInviteLoading(true);
     setInviteCode("");
     try {
-      const res = await apiFetch<{ code: string }>(`/api/households/${household.id}/invite`, { method: "POST" });
+      const res = await apiFetch<{ code: string }>(`/api/households/${household.external_id}/invite`, { method: "POST" });
       setInviteCode(res.code);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al generar código");

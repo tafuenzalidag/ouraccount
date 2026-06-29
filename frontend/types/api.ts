@@ -11,7 +11,7 @@ export interface TokenResponse {
 }
 
 export interface HouseholdOut {
-  id: string;
+  external_id: string;
   nombre: string;
   moneda: string;
 }
