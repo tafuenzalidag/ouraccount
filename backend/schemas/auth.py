@@ -19,7 +19,7 @@ class TokenResponse(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: str
+    id: int
     email: str
     username: str
     nombre: str

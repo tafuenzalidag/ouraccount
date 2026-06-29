@@ -21,14 +21,14 @@ class PreviewItemOut(BaseModel):
     es_interno: bool
     es_hogar: bool
     incluido: bool
-    category_id: Optional[str]
+    category_id: Optional[int]
     installment: Optional[InstallmentIn]
     hash_dedupe: str
     es_duplicado_posible: bool
 
 
 class ImportPreviewOut(BaseModel):
-    batch_id: str
+    batch_id: int
     cuadre_ok: bool
     advertencia: Optional[str]
     items: list[PreviewItemOut]
@@ -44,12 +44,12 @@ class ConfirmItemIn(BaseModel):
     es_interno: bool
     es_hogar: bool
     incluido: bool
-    category_id: Optional[str] = None
+    category_id: Optional[int] = None
     installment: Optional[InstallmentIn] = None
 
 
 class ImportConfirmIn(BaseModel):
-    payer_user_id: str
+    payer_user_id: int
     items: list[ConfirmItemIn]
 
 

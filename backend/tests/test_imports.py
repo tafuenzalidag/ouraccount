@@ -13,9 +13,9 @@ client = TestClient(app)
 
 
 def _make_user(db, email="tomas@test.com", username="tomas"):
-    import bcrypt, uuid
+    import bcrypt
     pw = bcrypt.hashpw(b"secret", bcrypt.gensalt()).decode()
-    u = User(id=str(uuid.uuid4()), email=email, username=username, password_hash=pw, nombre="Tomas")
+    u = User(email=email, username=username, password_hash=pw, nombre="Tomas")
     db.add(u)
     db.commit()
     db.refresh(u)
@@ -23,19 +23,16 @@ def _make_user(db, email="tomas@test.com", username="tomas"):
 
 
 def _make_household_with_member(db, user):
-    import uuid
-    h = Household(id=str(uuid.uuid4()), nombre="Depto", moneda="CLP")
+    h = Household(nombre="Depto", moneda="CLP")
     db.add(h)
     db.flush()
     hm = HouseholdMember(
-        id=str(uuid.uuid4()),
         household_id=h.id,
         user_id=user.id,
         ratio_default=0.57,
     )
     db.add(hm)
     pm = PaymentMethod(
-        id=str(uuid.uuid4()),
         household_id=h.id,
         tipo="tarjeta_credito",
         alias="TC Compartida",
@@ -43,7 +40,6 @@ def _make_household_with_member(db, user):
     )
     db.add(pm)
     cat = Category(
-        id=str(uuid.uuid4()),
         household_id=h.id,
         nombre="Otros",
     )
@@ -115,9 +111,7 @@ def test_confirm_import_creates_transactions(setup_db, db):
     app.dependency_overrides[get_current_user] = lambda: user
 
     from models import ImportBatch
-    import uuid
     batch = ImportBatch(
-        id=str(uuid.uuid4()),
         household_id=household.id,
         payment_method_id=pm.id,
         archivo_origen="pdf",
@@ -167,10 +161,8 @@ def test_confirm_skips_duplicates(setup_db, db):
 
     from models import ImportBatch, Transaction
     from services.text_utils import normalize_desc, dedupe_hash
-    import uuid
 
     batch = ImportBatch(
-        id=str(uuid.uuid4()),
         household_id=household.id,
         payment_method_id=pm.id,
         archivo_origen="pdf",
@@ -182,7 +174,6 @@ def test_confirm_skips_duplicates(setup_db, db):
     hash_d = dedupe_hash(date(2026, 5, 15), 45000, desc_norm)
 
     existing = Transaction(
-        id=str(uuid.uuid4()),
         household_id=household.id,
         payment_method_id=pm.id,
         payer_user_id=user.id,
@@ -232,9 +223,7 @@ def test_confirm_rejects_non_member_payer(setup_db, db):
     app.dependency_overrides[get_current_user] = lambda: user
 
     from models import ImportBatch
-    import uuid
     batch = ImportBatch(
-        id=str(uuid.uuid4()),
         household_id=household.id,
         payment_method_id=pm.id,
         archivo_origen="pdf",
@@ -244,7 +233,7 @@ def test_confirm_rejects_non_member_payer(setup_db, db):
     db.commit()
 
     payload = {
-        "payer_user_id": str(uuid.uuid4()),  # random non-member ID
+        "payer_user_id": 999999,  # non-existent integer user id
         "items": [
             {
                 "fecha_operacion": "2026-05-15",

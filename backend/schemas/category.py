@@ -3,15 +3,15 @@ from pydantic import BaseModel
 
 class CategoryCreate(BaseModel):
     nombre: str
-    parent_id: str | None = None
+    parent_id: int | None = None
     icono: str | None = None
     color: str | None = None
 
 
 class CategoryOut(BaseModel):
-    id: str
+    id: int
     nombre: str
-    parent_id: str | None
+    parent_id: int | None
     icono: str | None
     color: str | None
 

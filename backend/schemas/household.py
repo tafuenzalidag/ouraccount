@@ -8,7 +8,7 @@ class HouseholdCreate(BaseModel):
 
 
 class HouseholdOut(BaseModel):
-    id: str
+    id: int
     nombre: str
     moneda: str
 

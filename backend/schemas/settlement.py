@@ -3,9 +3,9 @@ from pydantic import BaseModel
 
 
 class SettlementOut(BaseModel):
-    id: str
-    deudor_user_id: str
-    acreedor_user_id: str
+    id: int
+    deudor_user_id: int
+    acreedor_user_id: int
     monto: int
     estado: str
     periodo_desde: date
@@ -17,6 +17,6 @@ class SettlementOut(BaseModel):
 
 class SettlementPeriodOut(BaseModel):
     settlement: SettlementOut | None
-    pagado: dict[str, int]
-    debido: dict[str, int]
-    balance: dict[str, int]
+    pagado: dict[int, int]
+    debido: dict[int, int]
+    balance: dict[int, int]

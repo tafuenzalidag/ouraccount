@@ -1,4 +1,3 @@
-import uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from database import get_db
@@ -50,7 +49,6 @@ async def upload_pdf(
     result = parse_pdf_bytes(pdf_bytes)
 
     batch = ImportBatch(
-        id=str(uuid.uuid4()),
         household_id=household_id,
         payment_method_id=payment_method_id,
         archivo_origen="pdf",
@@ -159,7 +157,6 @@ def confirm_import(
         installment_plan_id = None
         if item.installment:
             plan = InstallmentPlan(
-                id=str(uuid.uuid4()),
                 household_id=batch.household_id,
                 descripcion=item.installment.descripcion,
                 monto_total=item.installment.monto_total,
@@ -173,7 +170,6 @@ def confirm_import(
             installment_plan_id = plan.id
 
         tx = Transaction(
-            id=str(uuid.uuid4()),
             household_id=batch.household_id,
             import_batch_id=batch.id,
             payment_method_id=batch.payment_method_id,

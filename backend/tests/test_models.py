@@ -1,9 +1,14 @@
 from models import (
     User, Household, HouseholdMember, PaymentMethod, Category,
-    ImportBatch, Transaction, InstallmentPlan, SplitAllocation,
-    Settlement, MerchantRule
+    ImportBatch, MerchantRule, Transaction, InstallmentPlan,
+    SplitAllocation, Settlement,
 )
 from database import Base
+from sqlalchemy import inspect
+
+
+def _cols(model):
+    return {c.key: c for c in inspect(model).mapper.column_attrs}
 
 
 def test_all_models_importable():
@@ -19,3 +24,23 @@ def test_all_models_importable():
     assert "split_allocations" in tables
     assert "settlements" in tables
     assert "merchant_rules" in tables
+
+
+def test_user_has_integer_pk():
+    cols = _cols(User)
+    assert cols["id"].columns[0].type.python_type == int
+
+
+def test_all_models_have_timestamps():
+    for Model in [User, Household, HouseholdMember, PaymentMethod, Category,
+                  ImportBatch, MerchantRule, Transaction, InstallmentPlan,
+                  SplitAllocation, Settlement]:
+        cols = {c.key for c in inspect(Model).mapper.column_attrs}
+        assert "created_at" in cols, f"{Model.__name__} missing created_at"
+        assert "updated_at" in cols, f"{Model.__name__} missing updated_at"
+        assert "deleted_at" in cols, f"{Model.__name__} missing deleted_at"
+
+
+def test_transaction_household_id_is_integer():
+    cols = _cols(Transaction)
+    assert cols["household_id"].columns[0].type.python_type == int

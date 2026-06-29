@@ -1,6 +1,5 @@
-import uuid
-from datetime import date
-from sqlalchemy import String, BigInteger, Date, ForeignKey
+from datetime import datetime
+from sqlalchemy import String, Integer, BigInteger, DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 from database import Base
 
@@ -8,12 +7,14 @@ from database import Base
 class ImportBatch(Base):
     __tablename__ = "import_batches"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    household_id: Mapped[str] = mapped_column(String, ForeignKey("households.id"), nullable=False)
-    payment_method_id: Mapped[str] = mapped_column(String, ForeignKey("payment_methods.id"), nullable=False)
-    archivo_origen: Mapped[str] = mapped_column(String, nullable=False)  # pdf | csv
-    periodo_desde: Mapped[date | None] = mapped_column(Date, nullable=True)
-    periodo_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    household_id: Mapped[int] = mapped_column(Integer, ForeignKey("households.id"), nullable=False)
+    payment_method_id: Mapped[int] = mapped_column(Integer, ForeignKey("payment_methods.id"), nullable=False)
+    archivo_origen: Mapped[str] = mapped_column(String, nullable=False)
+    periodo_desde: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    periodo_hasta: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     total_facturado_declarado: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    importado_en: Mapped[date] = mapped_column(Date, default=date.today)
-    estado: Mapped[str] = mapped_column(String, default="preview")  # preview | confirmado
+    estado: Mapped[str] = mapped_column(String, default="preview")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
