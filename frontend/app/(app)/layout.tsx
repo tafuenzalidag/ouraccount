@@ -20,9 +20,11 @@ const PAGE_TITLES: Record<string, string> = {
   "/imports":           "Importar",
   "/settlement":        "Liquidación",
   "/settings":          "Ajustes",
+  "/duplicates":        "Duplicados",
 };
 
 function activeTab(pathname: string) {
+  if (pathname.startsWith("/duplicates")) return null;
   if (pathname.startsWith("/transactions")) return "/transactions";
   return TABS.find((t) => pathname === t.href)?.href ?? null;
 }
@@ -44,21 +46,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         display: "flex",
         flexDirection: "column",
         height: "100dvh",
-        background: "var(--bg-base)",
+        background: "var(--background)",
         overflow: "hidden",
       }}
     >
-      {/* NavBar — glass top */}
+      {/* NavBar — flat top */}
       <header
         style={{
           flexShrink: 0,
           position: "sticky",
           top: 0,
           zIndex: 20,
-          background: "var(--material-chrome)",
-          WebkitBackdropFilter: "var(--blur-regular)",
-          backdropFilter: "var(--blur-regular)",
-          boxShadow: "0 0.5px 0 var(--separator)",
+          background: "var(--surface)",
+          boxShadow: "0 0.5px 0 var(--border)",
         }}
       >
         <div
@@ -75,10 +75,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           <span
             style={{
-              fontFamily: "var(--font-display)",
+              fontFamily: "var(--font-sans)",
               fontSize: 17,
               fontWeight: "var(--w-semibold)",
-              color: "var(--text-primary)",
+              color: "var(--text-strong)",
               letterSpacing: "-0.01em",
             }}
           >
@@ -90,7 +90,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => { clearToken(); router.replace("/login"); }}
                 style={{
-                  fontFamily: "var(--font-text)",
+                  fontFamily: "var(--font-sans)",
                   fontSize: 15,
                   color: "var(--accent)",
                   background: "none",
@@ -113,13 +113,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           flex: 1,
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
-          padding: "var(--space-5) var(--gutter) var(--space-8)",
+          padding: "var(--space-5) var(--space-4) var(--space-8)",
         }}
       >
         {children}
       </main>
 
-      {/* TabBar — glass bottom */}
+      {/* TabBar — flat bottom */}
       <nav
         style={{
           flexShrink: 0,
@@ -127,10 +127,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           justifyContent: "space-around",
           alignItems: "stretch",
           padding: "8px 4px 10px",
-          background: "var(--material-chrome)",
-          WebkitBackdropFilter: "var(--blur-regular)",
-          backdropFilter: "var(--blur-regular)",
-          boxShadow: "0 -0.5px 0 var(--separator)",
+          background: "var(--surface)",
+          boxShadow: "0 -0.5px 0 var(--border)",
         }}
       >
         {TABS.map(({ href, label, Icon }) => {
@@ -146,7 +144,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 alignItems: "center",
                 gap: 3,
                 padding: "2px 0",
-                color: sel ? "var(--accent)" : "var(--text-tertiary)",
+                color: sel ? "var(--accent)" : "var(--text-muted)",
                 textDecoration: "none",
                 transition: "color var(--dur-fast) var(--ease-standard)",
                 WebkitTapHighlightColor: "transparent",
@@ -159,7 +157,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               />
               <span
                 style={{
-                  fontFamily: "var(--font-text)",
+                  fontFamily: "var(--font-sans)",
                   fontSize: 10,
                   fontWeight: sel ? "var(--w-semibold)" : "var(--w-medium)",
                   letterSpacing: "0.01em",
