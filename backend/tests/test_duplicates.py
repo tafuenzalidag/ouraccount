@@ -135,9 +135,9 @@ def test_delete_transaction_hidden_from_list(setup):
 
 def test_delete_transaction_404_if_not_found(setup):
     client, headers_a, _, hid, _ = setup
-    fake_id = "tx_aaaa"
+    fake_id = encode("tx_", 999999)
     res = client.delete(f"/api/households/{hid}/transactions/{fake_id}", headers=headers_a)
-    assert res.status_code in (404, 422)
+    assert res.status_code == 404
 
 
 def test_delete_transaction_403_if_not_member(setup):

@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
@@ -59,6 +58,21 @@ def dismiss_duplicate(
     _assert_member(hh_int, current_user, db)
     _, tx_a_int = decode(req.tx_external_id_a)
     _, tx_b_int = decode(req.tx_external_id_b)
+
+    # Verify both transactions belong to this household
+    tx_a = db.query(Transaction).filter(
+        Transaction.id == tx_a_int,
+        Transaction.household_id == hh_int,
+        Transaction.deleted_at.is_(None),
+    ).first()
+    tx_b = db.query(Transaction).filter(
+        Transaction.id == tx_b_int,
+        Transaction.household_id == hh_int,
+        Transaction.deleted_at.is_(None),
+    ).first()
+    if not tx_a or not tx_b:
+        raise HTTPException(status_code=404, detail="Transacción no encontrada")
+
     id_a, id_b = min(tx_a_int, tx_b_int), max(tx_a_int, tx_b_int)
     existing = db.query(DismissedDuplicatePair).filter(
         DismissedDuplicatePair.tx_id_a == id_a,

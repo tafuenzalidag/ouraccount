@@ -26,6 +26,7 @@ def _assert_member(hh_int: int, user: User, db: Session):
     m = db.query(HouseholdMember).filter(
         HouseholdMember.household_id == hh_int,
         HouseholdMember.user_id == user.id,
+        HouseholdMember.deleted_at.is_(None),
     ).first()
     if not m:
         raise HTTPException(status_code=403, detail="No perteneces a este hogar")
