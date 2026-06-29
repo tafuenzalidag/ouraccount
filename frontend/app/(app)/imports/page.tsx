@@ -389,7 +389,7 @@ export default function ImportsPage() {
                       {item.fuzzy_matches.length > 0 && (
                         <span style={{
                           fontSize: "var(--text-xs)", padding: "2px 6px",
-                          background: "#fef9c3", color: "#854d0e",
+                          background: "var(--accent-soft)", color: "var(--accent)",
                           borderRadius: "var(--radius-pill)", marginLeft: 6,
                         }}>
                           ⚠ posible duplicado

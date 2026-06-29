@@ -3,19 +3,34 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import { getHouseholdId } from "@/lib/auth";
+import { getHouseholdId, getToken } from "@/lib/auth";
 import { TransactionOut } from "@/types/api";
 import { TransactionList } from "@/components/TransactionList";
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export default function TransactionsPage() {
   const [txs, setTxs] = useState<TransactionOut[]>([]);
   const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [duplicateCount, setDuplicateCount] = useState(0);
 
   useEffect(() => {
     const hid = getHouseholdId();
     setHouseholdId(hid);
     if (!hid) return;
     apiFetch<TransactionOut[]>(`/api/households/${hid}/transactions`).then(setTxs);
+  }, []);
+
+  useEffect(() => {
+    const token = getToken();
+    const hid = getHouseholdId();
+    if (!token || !hid) return;
+    fetch(`${API}/api/households/${hid}/duplicate-candidates`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data: unknown[]) => setDuplicateCount(data.length))
+      .catch(() => {});
   }, []);
 
   return (
@@ -43,6 +58,22 @@ export default function TransactionsPage() {
           Nuevo
         </Link>
       </div>
+
+      {duplicateCount > 0 && (
+        <Link
+          href="/duplicates"
+          style={{
+            display: "block", marginBottom: "var(--space-4)",
+            padding: "var(--space-3) var(--space-4)",
+            background: "var(--accent-soft)", borderRadius: "var(--radius-lg)",
+            color: "var(--accent)", fontSize: "var(--text-sm)",
+            fontWeight: "var(--weight-medium)", textDecoration: "none",
+            border: "1px solid var(--blue-100)",
+          }}
+        >
+          {duplicateCount} posible{duplicateCount > 1 ? "s" : ""} duplicado{duplicateCount > 1 ? "s" : ""} detectado{duplicateCount > 1 ? "s" : ""} — Revisar →
+        </Link>
+      )}
 
       {householdId ? (
         <TransactionList transactions={txs} />
