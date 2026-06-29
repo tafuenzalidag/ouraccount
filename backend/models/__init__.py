@@ -7,3 +7,4 @@ from .transaction import Transaction, InstallmentPlan
 from .split import SplitAllocation
 from .settlement import Settlement
 from .merchant_rule import MerchantRule
+from .dismissed_duplicate_pair import DismissedDuplicatePair
