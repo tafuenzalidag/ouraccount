@@ -8,11 +8,9 @@ class HouseholdCreate(BaseModel):
 
 
 class HouseholdOut(BaseModel):
-    id: int
+    external_id: str
     nombre: str
     moneda: str
-
-    model_config = {"from_attributes": True}
 
 
 class InviteOut(BaseModel):

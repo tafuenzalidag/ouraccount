@@ -7,6 +7,7 @@ from main import app
 from database import get_db
 from models import User, Household, HouseholdMember, PaymentMethod, Category
 from services.auth import get_current_user
+from services.id_codec import encode
 from services.pdf_parser import ParseResult, ParsedItem, BatchMeta
 
 client = TestClient(app)
@@ -87,14 +88,15 @@ def test_upload_pdf_creates_preview(setup_db, db):
 
     with patch("routers.imports.parse_pdf_bytes", return_value=_fake_parse_result()):
         resp = client.post(
-            f"/api/households/{household.id}/imports",
+            f"/api/households/{encode('hh_', household.id)}/imports",
             files={"file": ("cartola.pdf", io.BytesIO(b"%PDF fake"), "application/pdf")},
-            data={"payment_method_id": pm.id},
+            data={"payment_method_id": encode("pm_", pm.id)},
         )
 
     assert resp.status_code == 200
     body = resp.json()
     assert "batch_id" in body
+    assert body["batch_id"].startswith("ib_")
     assert len(body["items"]) == 1
     assert body["items"][0]["descripcion_norm"] == "CASAVINTE"
     assert body["items"][0]["monto"] == 45000
@@ -121,7 +123,7 @@ def test_confirm_import_creates_transactions(setup_db, db):
     db.commit()
 
     payload = {
-        "payer_user_id": user.id,
+        "payer_user_id": encode("us_", user.id),
         "items": [
             {
                 "fecha_operacion": "2026-05-15",
@@ -138,7 +140,7 @@ def test_confirm_import_creates_transactions(setup_db, db):
             }
         ],
     }
-    resp = client.post(f"/api/imports/{batch.id}/confirm", json=payload)
+    resp = client.post(f"/api/imports/{encode('ib_', batch.id)}/confirm", json=payload)
     assert resp.status_code == 200
     body = resp.json()
     assert body["transactions_created"] == 1
@@ -190,7 +192,7 @@ def test_confirm_skips_duplicates(setup_db, db):
     db.commit()
 
     payload = {
-        "payer_user_id": user.id,
+        "payer_user_id": encode("us_", user.id),
         "items": [
             {
                 "fecha_operacion": "2026-05-15",
@@ -207,7 +209,7 @@ def test_confirm_skips_duplicates(setup_db, db):
             }
         ],
     }
-    resp = client.post(f"/api/imports/{batch.id}/confirm", json=payload)
+    resp = client.post(f"/api/imports/{encode('ib_', batch.id)}/confirm", json=payload)
     assert resp.status_code == 200
     assert resp.json()["duplicates_skipped"] == 1
     assert resp.json()["transactions_created"] == 0
@@ -233,7 +235,7 @@ def test_confirm_rejects_non_member_payer(setup_db, db):
     db.commit()
 
     payload = {
-        "payer_user_id": 999999,  # non-existent integer user id
+        "payer_user_id": encode("us_", 999999),  # non-existent user id
         "items": [
             {
                 "fecha_operacion": "2026-05-15",
@@ -247,7 +249,7 @@ def test_confirm_rejects_non_member_payer(setup_db, db):
             }
         ],
     }
-    resp = client.post(f"/api/imports/{batch.id}/confirm", json=payload)
+    resp = client.post(f"/api/imports/{encode('ib_', batch.id)}/confirm", json=payload)
     assert resp.status_code == 400
     assert "payer_user_id" in resp.json()["detail"]
 

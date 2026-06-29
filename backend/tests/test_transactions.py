@@ -19,7 +19,7 @@ def setup(client):
     h = client.post("/api/households", json={
         "nombre": "Depto", "ratio_a": 0.57, "nombre_display_a": "A", "nombre_display_b": "B"
     }, headers=headers_a).json()
-    hid = h["id"]
+    hid = h["external_id"]
 
     # B se une
     code = client.post(f"/api/households/{hid}/invite", headers=headers_a).json()["code"]
@@ -30,7 +30,7 @@ def setup(client):
         "tipo": "tarjeta_credito", "alias": "TC", "es_compartido": True
     }, headers=headers_a).json()
 
-    return client, headers_a, headers_b, hid, pm["id"]
+    return client, headers_a, headers_b, hid, pm["external_id"]
 
 
 def test_create_manual_transaction(setup):
@@ -46,6 +46,9 @@ def test_create_manual_transaction(setup):
     tx = res.json()
     assert tx["monto"] == 50_000
     assert tx["descripcion_norm"] == "JUMBO"
+    assert tx["external_id"].startswith("tx_")
+    assert tx["payer_user_id"].startswith("us_")
+    assert tx["payment_method_id"].startswith("pm_")
 
 
 def test_list_transactions(setup):
@@ -95,6 +98,7 @@ def test_settlement_calculation(setup):
     data = res.json()
     assert data["settlement"] is not None
     assert data["settlement"]["monto"] > 0
+    assert data["settlement"]["external_id"].startswith("set_")
 
 
 def test_settlement_pay(setup):
@@ -117,7 +121,7 @@ def test_settlement_pay(setup):
         headers=headers_a,
     )
     assert res.status_code == 200
-    settlement_id = res.json()["settlement"]["id"]
+    settlement_id = res.json()["settlement"]["external_id"]
 
     # Mark as paid
     res2 = client.post(f"/api/settlements/{settlement_id}/pay", headers=headers_a)

@@ -33,7 +33,8 @@ def test_create_household(auth_client):
     assert res.status_code == 200
     data = res.json()
     assert data["nombre"] == "Nuestro Depto"
-    assert "id" in data
+    assert "external_id" in data
+    assert data["external_id"].startswith("hh_")
 
 
 def test_invite_and_join(auth_client, auth_client_b):
@@ -47,7 +48,7 @@ def test_invite_and_join(auth_client, auth_client_b):
     }, headers=headers_a).json()
 
     # A genera código
-    invite = client.post(f"/api/households/{h['id']}/invite", headers=headers_a)
+    invite = client.post(f"/api/households/{h['external_id']}/invite", headers=headers_a)
     assert invite.status_code == 200
     code = invite.json()["code"]
     assert len(code) == 6
@@ -55,7 +56,7 @@ def test_invite_and_join(auth_client, auth_client_b):
     # B usa el código
     join = client.post("/api/households/join", json={"code": code}, headers=headers_b)
     assert join.status_code == 200
-    assert join.json()["id"] == h["id"]
+    assert join.json()["external_id"] == h["external_id"]
 
 
 def test_join_invalid_code(auth_client_b):
@@ -73,7 +74,7 @@ def test_invite_forbidden_for_non_member(auth_client, auth_client_b):
         "nombre_display_a": "A", "nombre_display_b": "B"
     }, headers=headers_a).json()
     # B (not a member) tries to generate an invite
-    res = client.post(f"/api/households/{h['id']}/invite", headers=headers_b)
+    res = client.post(f"/api/households/{h['external_id']}/invite", headers=headers_b)
     assert res.status_code == 403
 
 
@@ -83,7 +84,7 @@ def test_seed_categories_on_create(auth_client):
         "nombre": "Depto", "ratio_a": 0.57,
         "nombre_display_a": "A", "nombre_display_b": "B"
     }, headers=headers).json()
-    cats = client.get(f"/api/households/{h['id']}/categories", headers=headers).json()
+    cats = client.get(f"/api/households/{h['external_id']}/categories", headers=headers).json()
     nombres = [c["nombre"] for c in cats]
     assert "Alimentación" in nombres
     assert "Supermercado" in nombres
@@ -96,7 +97,7 @@ def test_create_payment_method(auth_client):
         "nombre": "Depto", "ratio_a": 0.57,
         "nombre_display_a": "A", "nombre_display_b": "B"
     }, headers=headers).json()
-    res = client.post(f"/api/households/{h['id']}/payment-methods", json={
+    res = client.post(f"/api/households/{h['external_id']}/payment-methods", json={
         "tipo": "tarjeta_credito",
         "alias": "TC Compartida",
         "ultimos_digitos": "7777",
@@ -104,7 +105,9 @@ def test_create_payment_method(auth_client):
         "banco": "Santander"
     }, headers=headers)
     assert res.status_code == 200
-    assert res.json()["alias"] == "TC Compartida"
+    data = res.json()
+    assert data["alias"] == "TC Compartida"
+    assert data["external_id"].startswith("pm_")
 
 
 def test_list_payment_methods(auth_client):
@@ -113,12 +116,12 @@ def test_list_payment_methods(auth_client):
         "nombre": "Depto", "ratio_a": 0.57,
         "nombre_display_a": "A", "nombre_display_b": "B"
     }, headers=headers).json()
-    client.post(f"/api/households/{h['id']}/payment-methods", json={
+    client.post(f"/api/households/{h['external_id']}/payment-methods", json={
         "tipo": "cuenta_corriente",
         "alias": "CuentaRut",
         "es_compartido": False,
     }, headers=headers)
-    res = client.get(f"/api/households/{h['id']}/payment-methods", headers=headers)
+    res = client.get(f"/api/households/{h['external_id']}/payment-methods", headers=headers)
     assert res.status_code == 200
     assert len(res.json()) == 1
 
@@ -130,7 +133,7 @@ def test_payment_method_forbidden_for_non_member(auth_client, auth_client_b):
         "nombre": "Depto", "ratio_a": 0.57,
         "nombre_display_a": "A", "nombre_display_b": "B"
     }, headers=headers_a).json()
-    res = client.get(f"/api/households/{h['id']}/payment-methods", headers=headers_b)
+    res = client.get(f"/api/households/{h['external_id']}/payment-methods", headers=headers_b)
     assert res.status_code == 403
 
 
@@ -140,9 +143,10 @@ def test_create_custom_category(auth_client):
         "nombre": "Depto", "ratio_a": 0.57,
         "nombre_display_a": "A", "nombre_display_b": "B"
     }, headers=headers).json()
-    res = client.post(f"/api/households/{h['id']}/categories", json={
+    res = client.post(f"/api/households/{h['external_id']}/categories", json={
         "nombre": "Deportes",
         "icono": "⚽",
     }, headers=headers)
     assert res.status_code == 200
     assert res.json()["nombre"] == "Deportes"
+    assert res.json()["external_id"].startswith("cat_")

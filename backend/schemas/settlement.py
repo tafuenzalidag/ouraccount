@@ -3,20 +3,18 @@ from pydantic import BaseModel
 
 
 class SettlementOut(BaseModel):
-    id: int
-    deudor_user_id: int
-    acreedor_user_id: int
+    external_id: str
+    deudor_user_id: str             # encoded external_id
+    acreedor_user_id: str           # encoded external_id
     monto: int
     estado: str
     periodo_desde: date
     periodo_hasta: date
     pagado_en: date | None
 
-    model_config = {"from_attributes": True}
-
 
 class SettlementPeriodOut(BaseModel):
     settlement: SettlementOut | None
-    pagado: dict[int, int]
-    debido: dict[int, int]
-    balance: dict[int, int]
+    pagado: dict[str, int]
+    debido: dict[str, int]
+    balance: dict[str, int]

@@ -21,14 +21,14 @@ class PreviewItemOut(BaseModel):
     es_interno: bool
     es_hogar: bool
     incluido: bool
-    category_id: Optional[int]
+    category_id: Optional[str]    # encoded external_id
     installment: Optional[InstallmentIn]
     hash_dedupe: str
     es_duplicado_posible: bool
 
 
 class ImportPreviewOut(BaseModel):
-    batch_id: int
+    batch_id: str                 # encoded external_id
     cuadre_ok: bool
     advertencia: Optional[str]
     items: list[PreviewItemOut]
@@ -44,12 +44,12 @@ class ConfirmItemIn(BaseModel):
     es_interno: bool
     es_hogar: bool
     incluido: bool
-    category_id: Optional[int] = None
+    category_id: Optional[str] = None   # external_id, router decodes
     installment: Optional[InstallmentIn] = None
 
 
 class ImportConfirmIn(BaseModel):
-    payer_user_id: int
+    payer_user_id: str            # external_id, router decodes
     items: list[ConfirmItemIn]
 
 
